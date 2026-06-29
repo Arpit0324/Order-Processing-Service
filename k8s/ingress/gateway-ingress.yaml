@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway-ingress
+  namespace: ops-system
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    # CORS handled by the gateway itself — don't duplicate here
+    nginx.ingress.kubernetes.io/enable-cors: "false"
+spec:
+  tls:
+    - hosts:
+        - api.ops.example.com
+      secretName: ops-tls-cert    # created by cert-manager or manually
+  rules:
+    - host: api.ops.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port: { number: 80 }

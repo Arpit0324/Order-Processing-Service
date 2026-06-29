@@ -1,0 +1,112 @@
+# ── Order Service HPA — CPU-based ────────────────────────────────────────────
+# Scales 2–10 replicas based on CPU utilisation.
+# Each replica handles ~200 concurrent actor asks (Akka dispatcher default).
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: order-service-hpa
+  namespace: ops-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: order-service
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type:               Utilization
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60       # avoid flapping — wait 60s before scaling up again
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300      # wait 5min before scaling down (actor state in-flight)
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+---
+# ── Inventory Service HPA — CPU + Kafka consumer lag (via KEDA) ──────────────
+# Standard K8s HPA for CPU. For Kafka lag-based scaling, install KEDA and use
+# the ScaledObject below instead.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: inventory-service-hpa
+  namespace: ops-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: inventory-service
+  minReplicas: 2
+  maxReplicas: 12
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type:               Utilization
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Pods
+          value: 3                         # allow burst: add 3 pods at once on spike
+          periodSeconds: 30
+    scaleDown:
+      stabilizationWindowSeconds: 180
+---
+# ── KEDA ScaledObject (install KEDA first: https://keda.sh) ──────────────────
+# Scales inventory-service based on order.created Kafka consumer lag.
+# Replaces or supplements the HPA above.
+# Uncomment when KEDA is installed in the cluster.
+#
+# apiVersion: keda.sh/v1alpha1
+# kind: ScaledObject
+# metadata:
+#   name: inventory-service-kafka-scaler
+#   namespace: ops-system
+# spec:
+#   scaleTargetRef:
+#     name: inventory-service
+#   minReplicaCount: 2
+#   maxReplicaCount: 12
+#   triggers:
+#     - type: kafka
+#       metadata:
+#         bootstrapServers: kafka-service:9092
+#         consumerGroup:    inventory-service
+#         topic:            order.created
+#         lagThreshold:     "50"    # add 1 pod per 50 unprocessed messages
+#         offsetResetPolicy: latest
+---
+# ── API Gateway HPA ───────────────────────────────────────────────────────────
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-gateway-hpa
+  namespace: ops-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-gateway
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type:               Utilization
+          averageUtilization: 70

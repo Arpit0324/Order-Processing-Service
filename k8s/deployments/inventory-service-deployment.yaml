@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-service
+  namespace: ops-system
+  labels:
+    app: inventory-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: inventory-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2          # allow extra pods during scale-out (KEDA may add many)
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: inventory-service
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: inventory-service
+          image: ops/inventory-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8082
+          resources:
+            requests:
+              cpu:    500m
+              memory: 512Mi
+            limits:
+              cpu:    "1"
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8082
+            initialDelaySeconds: 45
+            periodSeconds:       15
+            failureThreshold:    3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8082
+            initialDelaySeconds: 15
+            periodSeconds:       5
+            failureThreshold:    3
+          envFrom:
+            - configMapRef: { name: inventory-service-config }
+            - secretRef:    { name: db-credentials }
+            - secretRef:    { name: redis-auth }

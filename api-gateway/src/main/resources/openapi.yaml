@@ -1,0 +1,356 @@
+openapi: "3.0.3"
+info:
+  title: Order Processing System API
+  description: |
+    Unified API Gateway for the Order Processing System.
+
+    **Authentication**: All endpoints (except health/swagger) require `Authorization: Bearer <JWT>` (RS256).
+    **Idempotency**: `POST /api/orders` requires `Idempotency-Key` header (UUIDv4) to prevent duplicates.
+    **Tracing**: Include `X-Trace-Id` header for distributed tracing. Generated automatically if omitted.
+  version: "1.0.0"
+  contact:
+    name: OPS Engineering
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+  - url: https://api.ops.example.com
+    description: Production
+
+tags:
+  - name: Orders
+    description: Order lifecycle management
+  - name: Inventory
+    description: Stock level and reservation management
+  - name: Notifications
+    description: Notification history and status
+
+# ── Security scheme ──────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+
+    # ── Shared value objects ───────────────────────────────────────────────────
+    ItemLine:
+      type: object
+      required: [productId, quantity, unitPrice]
+      properties:
+        productId:  { type: string, example: "prod-abc123" }
+        quantity:   { type: integer, minimum: 1, example: 2 }
+        unitPrice:  { type: number, format: double, minimum: 0, example: 29.99 }
+
+    ShippingAddress:
+      type: object
+      required: [street, city, country, zip]
+      properties:
+        street:  { type: string, example: "123 Main St" }
+        city:    { type: string, example: "Springfield" }
+        country: { type: string, example: "US" }
+        zip:     { type: string, example: "62701" }
+
+    # ── Order schemas ──────────────────────────────────────────────────────────
+    CreateOrderRequest:
+      type: object
+      required: [customerId, items, shippingAddress]
+      properties:
+        customerId:
+          type: string
+          format: uuid
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/ItemLine" }
+        shippingAddress: { $ref: "#/components/schemas/ShippingAddress" }
+
+    OrderResponse:
+      type: object
+      properties:
+        orderId:      { type: string, format: uuid }
+        customerId:   { type: string, format: uuid }
+        status:
+          type: string
+          enum: [PENDING, CONFIRMED, CANCELLED, FULFILLED, RETURN_REQUESTED, RETURNED]
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ItemLine" }
+        totalAmount:  { type: number, format: double }
+        createdAt:    { type: string, format: date-time }
+        updatedAt:    { type: string, format: date-time }
+        cancelledReason:   { type: string, nullable: true }
+        cancelledAt:       { type: string, format: date-time, nullable: true }
+        returnRequestedAt: { type: string, format: date-time, nullable: true }
+        returnedAt:        { type: string, format: date-time, nullable: true }
+        refundAmount:      { type: number, format: double, nullable: true }
+
+    OrderListResponse:
+      type: object
+      properties:
+        orders:   { type: array, items: { $ref: "#/components/schemas/OrderResponse" } }
+        total:    { type: integer }
+        page:     { type: integer }
+        pageSize: { type: integer }
+
+    CancelOrderRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          enum: [CUSTOMER_REQUEST, PAYMENT_FAILED]
+          example: CUSTOMER_REQUEST
+
+    RequestReturnRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, example: "Wrong size" }
+
+    RejectReturnRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, example: "Outside 30-day return window" }
+
+    # ── Inventory schemas ──────────────────────────────────────────────────────
+    InventoryResponse:
+      type: object
+      properties:
+        productId:    { type: string }
+        sku:          { type: string }
+        name:         { type: string }
+        quantity:     { type: integer }
+        reservedQty:  { type: integer }
+        availableQty: { type: integer }
+        version:      { type: integer, format: int64 }
+        lastUpdated:  { type: string, format: date-time }
+
+    UpdateStockRequest:
+      type: object
+      required: [delta]
+      properties:
+        delta: { type: integer, description: "Positive to add stock, negative to remove", example: 50 }
+
+    # ── Notification schemas ───────────────────────────────────────────────────
+    NotificationResponse:
+      type: object
+      properties:
+        id:        { type: string, format: uuid }
+        orderId:   { type: string, format: uuid }
+        channel:   { type: string, enum: [EMAIL, SMS, PUSH] }
+        recipient: { type: string }
+        template:  { type: string }
+        status:    { type: string, enum: [PENDING, DELIVERED, FAILED] }
+        attempts:  { type: integer }
+        sentAt:    { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    # ── Error schema ───────────────────────────────────────────────────────────
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:      { type: string, example: "NOT_FOUND" }
+            message:   { type: string }
+            traceId:   { type: string }
+            timestamp: { type: string, format: date-time }
+
+security:
+  - bearerAuth: []
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+paths:
+
+  /api/orders:
+    post:
+      tags: [Orders]
+      summary: Create a new order
+      operationId: createOrder
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, format: uuid }
+        - name: X-Trace-Id
+          in: header
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateOrderRequest" }
+      responses:
+        "201": { description: Order created, content: { application/json: { schema: { $ref: "#/components/schemas/OrderResponse" } } } }
+        "400": { description: Invalid request, content: { application/json: { schema: { $ref: "#/components/schemas/ErrorResponse" } } } }
+        "401": { description: Unauthorized }
+        "409": { description: Duplicate order (same Idempotency-Key) }
+        "503": { description: Order service unavailable (circuit breaker open) }
+
+    get:
+      tags: [Orders]
+      summary: List orders for a customer
+      operationId: listOrders
+      parameters:
+        - name: customerId
+          in: query
+          required: true
+          schema: { type: string, format: uuid }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/OrderListResponse" } } } }
+
+  /api/orders/{orderId}:
+    get:
+      tags: [Orders]
+      summary: Get order by ID
+      operationId: getOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/OrderResponse" } } } }
+        "404": { description: Order not found }
+
+    delete:
+      tags: [Orders]
+      summary: Cancel an order
+      operationId: cancelOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CancelOrderRequest" }
+      responses:
+        "200": { description: Order cancelled }
+        "404": { description: Order not found }
+        "409": { description: Invalid state transition }
+
+  /api/orders/{orderId}/return:
+    post:
+      tags: [Orders]
+      summary: Request a return for a fulfilled order (30-day window)
+      operationId: requestReturn
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RequestReturnRequest" }
+      responses:
+        "200": { description: Return requested }
+        "404": { description: Order not found }
+        "409": { description: Return not allowed (wrong status or outside window) }
+
+  /api/orders/{orderId}/return/approve:
+    put:
+      tags: [Orders]
+      summary: Approve a return request (internal ops)
+      operationId: approveReturn
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Return approved }
+
+  /api/orders/{orderId}/return/reject:
+    put:
+      tags: [Orders]
+      summary: Reject a return request (internal ops)
+      operationId: rejectReturn
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RejectReturnRequest" }
+      responses:
+        "200": { description: Return rejected }
+
+  /api/inventory/{productId}:
+    get:
+      tags: [Inventory]
+      summary: Get inventory level for a product
+      operationId: getInventory
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/InventoryResponse" } } } }
+        "404": { description: Product not found }
+
+  /api/inventory/{productId}/stock:
+    put:
+      tags: [Inventory]
+      summary: Adjust stock level (internal ops / warehouse system)
+      operationId: updateStock
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateStockRequest" }
+      responses:
+        "200": { description: Stock updated }
+        "404": { description: Product not found }
+
+  /api/notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications for an order
+      operationId: listNotifications
+      parameters:
+        - name: orderId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/NotificationResponse" } } } } }
+
+  /api/notifications/{id}:
+    get:
+      tags: [Notifications]
+      summary: Get a notification by ID
+      operationId: getNotification
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/NotificationResponse" } } } }
+        "404": { description: Notification not found }

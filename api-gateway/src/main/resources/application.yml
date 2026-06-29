@@ -1,0 +1,165 @@
+spring:
+  application:
+    name: api-gateway
+
+  # ── Redis (rate-limit counters + idempotency cache) ─────────────────────────
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  # ── Spring Cloud Gateway route table ─────────────────────────────────────────
+  cloud:
+    gateway:
+      # Global default filters applied to every route
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+      routes:
+        # ── Order Service ─────────────────────────────────────────────────────
+        - id: order-service
+          uri: ${ORDER_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name:                   orderCircuitBreaker
+                fallbackUri:            forward:/fallback/orders
+            - name: Retry
+              args:
+                retries:     2
+                statuses:    BAD_GATEWAY,SERVICE_UNAVAILABLE
+                methods:     GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff:   500ms
+                  factor:       2
+
+        # ── Inventory Service ──────────────────────────────────────────────────
+        - id: inventory-service
+          uri: ${INVENTORY_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/inventory/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name:       inventoryCircuitBreaker
+                fallbackUri: forward:/fallback/inventory
+            - name: Retry
+              args:
+                retries:  2
+                statuses: BAD_GATEWAY,SERVICE_UNAVAILABLE
+                methods:  GET
+
+        # ── Notification Service ───────────────────────────────────────────────
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name:       notificationCircuitBreaker
+                fallbackUri: forward:/fallback/notifications
+
+      # Global CORS policy
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: [GET, POST, PUT, DELETE, OPTIONS]
+            allowedHeaders: [Authorization, Content-Type, X-Trace-Id, Idempotency-Key]
+            exposedHeaders: [X-Trace-Id, X-RateLimit-Remaining]
+
+# ── Resilience4j circuit breaker config ──────────────────────────────────────
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        # Open after 5 failures in a 10s sliding window
+        slidingWindowType:            COUNT_BASED
+        slidingWindowSize:            10
+        failureRateThreshold:         50      # 50% failure → open
+        waitDurationInOpenState:      30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        recordExceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.reactive.function.client.WebClientResponseException
+    instances:
+      orderCircuitBreaker:
+        baseConfig: default
+      inventoryCircuitBreaker:
+        baseConfig: default
+      notificationCircuitBreaker:
+        baseConfig: default
+        # Notifications are non-critical — open faster, recover slower
+        failureRateThreshold: 60
+        waitDurationInOpenState: 60s
+
+  timelimiter:
+    configs:
+      default:
+        timeoutDuration: 5s      # abort downstream call after 5s
+    instances:
+      orderCircuitBreaker:      { baseConfig: default }
+      inventoryCircuitBreaker:  { baseConfig: default }
+      notificationCircuitBreaker: { timeoutDuration: 3s }
+
+# ── JWT config ────────────────────────────────────────────────────────────────
+gateway:
+  jwt:
+    # RS256 public key (base64-encoded DER, no PEM headers needed)
+    # Generate: openssl genrsa -out private.pem 2048
+    #           openssl rsa -in private.pem -pubout -out public.pem
+    # Set via env var in docker-compose / K8s Secret
+    public-key: ${JWT_PUBLIC_KEY:MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAplaceholder}
+
+# ── Server ────────────────────────────────────────────────────────────────────
+server:
+  port: ${SERVER_PORT:8080}
+  # Increase max header size for JWT tokens
+  max-http-request-header-size: 16KB
+
+# ── Actuator ─────────────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+# ── SpringDoc / Swagger UI ────────────────────────────────────────────────────
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    # Aggregate OpenAPI specs from all downstream services
+    urls:
+      - name:  API Gateway
+        url:   /v3/api-docs
+      - name:  Order Service
+        url:   /api/orders/v3/api-docs
+      - name:  Inventory Service
+        url:   /api/inventory/v3/api-docs
+      - name:  Notification Service
+        url:   /api/notifications/v3/api-docs
+
+logging:
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level %logger{36} traceId=%X{traceId} - %msg%n"
+  level:
+    com.ops.gateway: DEBUG
+    org.springframework.cloud.gateway: INFO
+    io.github.resilience4j: INFO
