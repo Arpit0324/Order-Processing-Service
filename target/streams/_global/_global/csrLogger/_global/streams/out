@@ -1,56 +1,56 @@
-[info] downloading https://repo1.maven.org/maven2/com/lightbend/akka/akka-persistence-jdbc_3/5.4.1/akka-persistence-jdbc_3-5.4.1.pom
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom
 [info] downloading https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-typed_3/2.9.3/akka-persistence-typed_3-2.9.3.pom
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom
 [info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom
+[info] downloading failed https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom.sha1
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom.sha1
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom.sha1
+[info] downloading https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom.sha1
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom.sha1
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom
 [info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-query_3/2.9.3/akka-persistence-query_3-2.9.3.pom
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-typed_3/2.9.3/akka-persistence-typed_3-2.9.3.pom
 [info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-actor-typed_3/2.9.3/akka-actor-typed_3-2.9.3.pom
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-query_3/2.9.3/akka-persistence-query_3-2.9.3.pom
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-typed_3/2.9.3/akka-persistence-typed_3-2.9.3.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/lightbend/akka/akka-persistence-jdbc_3/5.4.1/akka-persistence-jdbc_3-5.4.1.pom
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-query_3/2.9.3/akka-persistence-query_3-2.9.3.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom
-[info] downloading https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-actor-typed_3/2.9.3/akka-actor-typed_3-2.9.3.pom
-[info] downloading https://repo1.maven.org/maven2/com/lightbend/akka/akka-persistence-jdbc_3/5.4.1/akka-persistence-jdbc_3-5.4.1.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-typed_3/2.9.3/akka-persistence-typed_3-2.9.3.pom.sha1
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom.sha1
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom.sha1
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-actor-typed_3/2.9.3/akka-actor-typed_3-2.9.3.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-query_3/2.9.3/akka-persistence-query_3-2.9.3.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/lightbend/akka/akka-persistence-jdbc_3/5.4.1/akka-persistence-jdbc_3-5.4.1.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-actor-typed_3/2.9.3/akka-actor-typed_3-2.9.3.pom.sha1
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-typed_3/2.9.3/akka-persistence-typed_3-2.9.3.pom
 [info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom
-[info] downloading https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom
 [info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-typed_3/2.9.3/akka-persistence-typed_3-2.9.3.pom
 [info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom.sha1
 [info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom
+[info] downloading https://repo1.maven.org/maven2/com/lightbend/akka/akka-persistence-jdbc_3/5.4.1/akka-persistence-jdbc_3-5.4.1.pom
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-query_3/2.9.3/akka-persistence-query_3-2.9.3.pom
+[info] downloading https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-actor-typed_3/2.9.3/akka-actor-typed_3-2.9.3.pom
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-typed_3/2.9.3/akka-persistence-typed_3-2.9.3.pom.sha1
 [info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom
-[info] downloading https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom.sha1
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom
-[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom.sha1
-[info] downloading failed https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom.sha1
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom.sha1
 [info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream_3/2.9.3/akka-stream_3-2.9.3.pom.sha1
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-query_3/2.9.3/akka-persistence-query_3-2.9.3.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/lightbend/akka/akka-persistence-jdbc_3/5.4.1/akka-persistence-jdbc_3-5.4.1.pom
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-actor-typed_3/2.9.3/akka-actor-typed_3-2.9.3.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http-spray-json_3/10.6.3/akka-http-spray-json_3-10.6.3.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom
+[info] downloading https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom.sha1
+[info] downloading https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-typed_3/2.9.3/akka-persistence-typed_3-2.9.3.pom.sha1
+[info] downloading https://repo1.maven.org/maven2/com/lightbend/akka/akka-persistence-jdbc_3/5.4.1/akka-persistence-jdbc_3-5.4.1.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-http_3/10.6.3/akka-http_3-10.6.3.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-persistence-query_3/2.9.3/akka-persistence-query_3-2.9.3.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-actor-typed_3/2.9.3/akka-actor-typed_3-2.9.3.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/de/heikoseeberger/akka-http-circe_3/1.39.2/akka-http-circe_3-1.39.2.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/typesafe/akka/akka-stream-kafka_3/5.0.0/akka-stream-kafka_3-5.0.0.pom.sha1
+[info] downloading failed https://repo1.maven.org/maven2/com/lightbend/akka/akka-persistence-jdbc_3/5.4.1/akka-persistence-jdbc_3-5.4.1.pom.sha1
