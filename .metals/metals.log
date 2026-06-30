@@ -786,3 +786,8 @@ INFO: Unsupported notification method: $/setTrace
 2026.06.30 18:05:42 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\test\scala\com\ops\order\domain\OrderSpec.scala. Using presentation compiler with project's scala-library version: 3.3.7
 2026.06.30 18:06:19 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\project\plugins.sbt. Using presentation compiler with project's scala-library version: 3.3.7
 2026.06.30 18:06:19 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\notification-service\src\test\java\com\ops\notification\service\NotificationServiceImplTest.java. Using fallback presentation compiler.
+2026.06.30 18:07:50 WARN  Build server is not auto-connectable.
+2026.06.30 18:10:39 INFO  Detected new build tool in C:\tmp\arpit\java\Arpit\order-processing-system-structure
+2026.06.30 18:10:50 WARN  no build target for: C:\tmp\arpit\java\Arpit\order-processing-system-structure\notification-service\src\test\java\com\ops\notification\service\NotificationServiceImplTest.java
+2026.06.30 18:10:51 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\notification-service\src\test\java\com\ops\notification\service\NotificationServiceImplTest.java. Using fallback presentation compiler.
+2026.06.30 18:10:52 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\notification-service\src\test\java\com\ops\notification\service\NotificationServiceImplTest.java. Using fallback presentation compiler.

@@ -35,15 +35,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── Java 21 + SBT dependency cache ──────────────────────────────────────
+      # ── Java 21 ──────────────────────────────────────────────────────────────
       - name: Set up Java 21 (Temurin)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
-          cache: sbt           # caches ~/.sbt and ~/.cache/coursier
 
-      # Additional layer: cache ivy2 resolved JARs keyed on build files
+      # ── Install SBT ─────────────────────────────────────────────────────────
+      # GHA runners do not ship SBT; this action installs the version declared
+      # in project/build.properties (sbt.version=1.10.1).
+      - name: Install SBT
+        uses: sbt/setup-sbt@v1
+
+      # ── Cache ivy2 / Coursier resolved JARs ────────────────────────────────
       - name: Cache ivy2 / Coursier
         uses: actions/cache@v4
         with:

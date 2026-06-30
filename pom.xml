@@ -19,6 +19,18 @@
   <packaging>pom</packaging>
   <name>Order Processing System — Parent POM</name>
 
+  <!-- ── Repositories ────────────────────────────────────────────────────
+       Akka 2.7+ moved to BSL license and is no longer published on Maven
+       Central. Artifacts are served from Akka's own repository instead.
+  ────────────────────────────────────────────────────────────────────── -->
+  <repositories>
+    <repository>
+      <id>akka-repository</id>
+      <name>Akka Library Repository</name>
+      <url>https://repo.akka.io/maven</url>
+    </repository>
+  </repositories>
+
   <!-- ── Java modules managed by Maven ────────────────────────────────── -->
   <modules>
     <module>api-gateway</module>
