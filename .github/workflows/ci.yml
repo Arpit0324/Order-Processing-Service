@@ -1,0 +1,163 @@
+# =============================================================================
+# CI — Order Processing System
+# =============================================================================
+# Runs unit tests for every service on every push / PR.
+#
+# Jobs run in PARALLEL:
+#   ┌─ test-scala ─┐   sbt test  (shared · order-service · inventory-service)
+#   └─ test-java  ─┘   mvn test  (api-gateway · notification-service)
+#
+# Test results are published as a GitHub Check so failures appear inline on PRs.
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop, "feature/**", "fix/**"]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:        # allow manual runs from the Actions tab
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true  # cancel stale runs when new commits are pushed
+
+# ── Scala services (SBT) ─────────────────────────────────────────────────────
+jobs:
+  test-scala:
+    name: "Scala Tests · SBT"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Java 21 + SBT dependency cache ──────────────────────────────────────
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: sbt           # caches ~/.sbt and ~/.cache/coursier
+
+      # Additional layer: cache ivy2 resolved JARs keyed on build files
+      - name: Cache ivy2 / Coursier
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.ivy2/cache
+            ~/.cache/coursier/v1
+          key: sbt-deps-${{ runner.os }}-${{ hashFiles('**/*.sbt', 'project/build.properties', 'project/plugins.sbt') }}
+          restore-keys: |
+            sbt-deps-${{ runner.os }}-
+
+      # ── Compile (catches compile errors before running tests) ────────────────
+      - name: Compile
+        run: sbt compile
+
+      # ── Run all Scala unit tests ─────────────────────────────────────────────
+      - name: Run tests
+        run: sbt test
+
+      # ── Publish JUnit XML reports ────────────────────────────────────────────
+      # ScalaTest writes XML to target/test-reports/ via build.sbt testOptions.
+      - name: Publish Scala test results
+        uses: dorny/test-reporter@v1
+        if: always()           # run even when tests fail so we see the report
+        with:
+          name: "Scala Test Results"
+          path: |
+            shared/target/test-reports/*.xml
+            order-service/target/test-reports/*.xml
+            inventory-service/target/test-reports/*.xml
+          reporter: java-junit
+          fail-on-error: true
+
+      # Keep XML files as downloadable artefacts (useful for flaky test analysis)
+      - name: Upload test artefacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scala-test-reports
+          path: |
+            shared/target/test-reports/
+            order-service/target/test-reports/
+            inventory-service/target/test-reports/
+          retention-days: 14
+
+# ── Java services (Maven) ─────────────────────────────────────────────────────
+  test-java:
+    name: "Java Tests · Maven"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Java 21 + Maven dependency cache ────────────────────────────────────
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven          # caches ~/.m2/repository keyed on pom.xml hashes
+
+      # ── Compile ─────────────────────────────────────────────────────────────
+      - name: Compile
+        run: mvn compile --batch-mode --no-transfer-progress
+
+      # ── Run all Java unit tests ──────────────────────────────────────────────
+      # --batch-mode: non-interactive output (no ANSI, no progress bars)
+      # -Dsurefire.failIfNoSpecifiedTests=false: don't fail when a module has no tests
+      - name: Run tests
+        run: |
+          mvn test \
+            --batch-mode \
+            --no-transfer-progress \
+            -Dsurefire.failIfNoSpecifiedTests=false
+
+      # ── Publish JUnit XML reports ────────────────────────────────────────────
+      # Maven Surefire writes XML to target/surefire-reports/ automatically.
+      - name: Publish Java test results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: "Java Test Results"
+          path: |
+            api-gateway/target/surefire-reports/*.xml
+            notification-service/target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: true
+
+      # Artefact upload
+      - name: Upload test artefacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: java-test-reports
+          path: |
+            api-gateway/target/surefire-reports/
+            notification-service/target/surefire-reports/
+          retention-days: 14
+
+# ── Summary gate ─────────────────────────────────────────────────────────────
+# A single required status check that blocks PR merge until both jobs pass.
+  all-tests-pass:
+    name: "All Tests Pass"
+    runs-on: ubuntu-latest
+    needs: [test-scala, test-java]
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          if [[ "${{ needs.test-scala.result }}" != "success" || \
+                "${{ needs.test-java.result }}"  != "success" ]]; then
+            echo "One or more test jobs failed."
+            exit 1
+          fi
+          echo "All test jobs passed."

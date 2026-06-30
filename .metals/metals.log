@@ -739,3 +739,50 @@ C:\tmp\arpit\java\Arpit\order-processing-system-structure\api-gateway\src\main\j
 2026.06.30 17:52:51 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\notification-service\src\main\java\com\ops\notification\consumer\NotificationConsumer.java. Using fallback presentation compiler.
 2026.06.30 17:52:52 WARN  no build target for: C:\tmp\arpit\java\Arpit\order-processing-system-structure\notification-service\src\main\java\com\ops\notification\consumer\NotificationConsumer.java
 2026.06.30 17:52:51 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\notification-service\src\main\java\com\ops\notification\consumer\NotificationConsumer.java. Using fallback presentation compiler.
+2026.06.30 17:56:14 INFO  Started: Metals version 1.6.7 in folders 'C:\tmp\arpit\java\Arpit\order-processing-system-structure' for client Visual Studio Code 1.126.0.
+2026.06.30 17:56:14 INFO  Memory monitor started
+2026.06.30 17:56:15 WARN  Using H2 2.4.240 which is newer than the version Flyway has been verified with. The latest verified version of H2 is 2.3.232.
+2026.06.30 17:56:15 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 17:56:17 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 17:56:18 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+Jun 30, 2026 5:56:18 PM org.eclipse.lsp4j.jsonrpc.RemoteEndpoint handleCancellation
+WARNING: Unmatched cancel notification for request id 5
+Jun 30, 2026 5:56:18 PM org.eclipse.lsp4j.jsonrpc.RemoteEndpoint handleCancellation
+WARNING: Unmatched cancel notification for request id 1
+Jun 30, 2026 5:56:18 PM org.eclipse.lsp4j.jsonrpc.RemoteEndpoint handleCancellation
+WARNING: Unmatched cancel notification for request id 3
+2026.06.30 17:56:28 WARN  Build server is not auto-connectable.
+2026.06.30 17:56:28 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 17:56:28 WARN  no build target for: C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt
+2026.06.30 17:56:28 WARN  no build target for: C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\main\scala\com\ops\order\kafka\OrderEventProducer.scala
+2026.06.30 17:56:28 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 17:56:30 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\main\scala\com\ops\order\kafka\OrderEventProducer.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 17:56:30 INFO  time: code lens generation in 1.85s
+Jun 30, 2026 5:56:30 PM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
+INFO: Unsupported notification method: $/setTrace
+2026.06.30 17:56:31 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 17:58:13 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+Jun 30, 2026 5:59:36 PM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
+INFO: Unsupported notification method: $/setTrace
+2026.06.30 17:59:39 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 18:02:00 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+Jun 30, 2026 6:02:02 PM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
+INFO: Unsupported notification method: $/setTrace
+2026.06.30 18:02:42 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\test\scala\com\ops\order\domain\OrderSpec.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 18:02:42 WARN  no build target for: C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\test\scala\com\ops\order\domain\OrderSpec.scala
+2026.06.30 18:02:42 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 18:03:19 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\project\plugins.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 18:03:19 WARN  no build target for: C:\tmp\arpit\java\Arpit\order-processing-system-structure\project\plugins.sbt
+2026.06.30 18:03:19 WARN  no build target for: C:\tmp\arpit\java\Arpit\order-processing-system-structure\notification-service\src\test\java\com\ops\notification\service\NotificationServiceImplTest.java
+2026.06.30 18:03:19 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 18:03:19 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 18:03:58 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 18:04:19 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 18:04:19 WARN  no build target for: C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt
+2026.06.30 18:04:19 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 18:04:19 INFO  Detected new build tool in C:\tmp\arpit\java\Arpit\order-processing-system-structure
+2026.06.30 18:04:20 WARN  no build target for: C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt
+2026.06.30 18:04:20 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\build.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 18:05:42 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\test\scala\com\ops\order\domain\OrderSpec.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 18:06:19 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\project\plugins.sbt. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 18:06:19 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\notification-service\src\test\java\com\ops\notification\service\NotificationServiceImplTest.java. Using fallback presentation compiler.

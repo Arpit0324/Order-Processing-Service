@@ -9,6 +9,15 @@ ThisBuild / organization     := "com.ops"
 ThisBuild / organizationName := "Order Processing System"
 ThisBuild / version          := "1.0.0-SNAPSHOT"
 
+// ── Test reporting ────────────────────────────────────────────────────────────
+// Write JUnit XML to target/test-reports/ so GitHub Actions (dorny/test-reporter)
+// can parse results and show them inline on pull requests.
+ThisBuild / testOptions += Tests.Argument(
+  TestFrameworks.ScalaTest,
+  "-u", "target/test-reports",   // JUnit XML output directory
+  "-o"                            // also print to console
+)
+
 // ── Dependency Versions ──────────────────────────────────────────────────────
 val akkaVersion         = "2.9.3"
 val akkaHttpVersion     = "10.6.3"
