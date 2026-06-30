@@ -17,11 +17,11 @@ class InventoryServiceImpl(
   private val MaxLockRetries = 3
 
   override def getItem(productId: String): Future[Option[InventoryResponse]] =
-    repository.findById(productId).map(_.map(InventoryResponse.from))
+    repository.findById(productId).map(_.map(item => InventoryResponse.from(item)))
 
   override def listItems(page: Int, pageSize: Int): Future[(List[InventoryResponse], Int)] =
     repository.findAll(page, pageSize).map { case (items, total) =>
-      (items.map(InventoryResponse.from), total)
+      (items.map(item => InventoryResponse.from(item)), total)
     }
 
   // ── Core: reserve stock for every item in the order ──────────────────────────

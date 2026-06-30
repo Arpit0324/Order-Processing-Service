@@ -20,7 +20,7 @@ class InventoryEventProducer()(using system: ActorSystem[?], ec: ExecutionContex
 
   private val producerSettings = ProducerSettings(system, new StringSerializer, new StringSerializer)
     .withBootstrapServers(system.settings.config.getString("kafka.bootstrap-servers"))
-  private val producer = SendProducer(producerSettings)
+  private val producer: SendProducer[String, String] = SendProducer(producerSettings)
 
   // All items reserved successfully → order service can confirm
   def publishAllReserved(orderId: String, items: List[ItemLine], traceId: String): Future[Unit] =

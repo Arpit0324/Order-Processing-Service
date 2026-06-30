@@ -31,13 +31,13 @@ class InventoryCache(
 
   override def findById(productId: String): Future[Option[InventoryItem]] = {
     val cacheKey = key(productId)
-    redis.get(cacheKey).toScala.flatMap {
+    redis.get(cacheKey).asScala.flatMap {
       case null =>
         // Cache miss — go to DB
         delegate.findById(productId).flatMap {
           case None       => Future.successful(None)
           case Some(item) =>
-            redis.setex(cacheKey, ttlSecs, item.asJson.noSpaces).toScala
+            redis.setex(cacheKey, ttlSecs, item.asJson.noSpaces).asScala
               .map(_ => Some(item))
               .recover { case ex =>
                 log.warn("Redis SET failed for productId={}, returning DB result", productId, ex)
@@ -49,7 +49,7 @@ class InventoryCache(
           case Right(item) => Future.successful(Some(item))
           case Left(err)   =>
             log.warn("Redis cache decode failed for productId={}: {}", productId, err.getMessage)
-            redis.del(cacheKey).toScala.flatMap(_ => delegate.findById(productId))
+            redis.del(cacheKey).asScala.flatMap(_ => delegate.findById(productId))
         }
     }.recover { case ex =>
       log.error("Redis GET failed for productId={}, falling back to DB", productId, ex)
@@ -95,7 +95,7 @@ class InventoryCache(
       .flatMap { saved => invalidate(item.productId).map(_ => saved) }
 
   private def invalidate(productId: String): Future[Unit] =
-    redis.del(key(productId)).toScala
+    redis.del(key(productId)).asScala
       .map(_ => log.debug("Cache invalidated for productId={}", productId))
       .recover { case ex => log.warn("Cache invalidation failed for productId={}", productId, ex) }
 }

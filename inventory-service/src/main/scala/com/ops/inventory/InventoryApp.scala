@@ -38,10 +38,11 @@ object InventoryApp extends App {
   log.info("Flyway complete: {} migration(s) applied", migrationResult.migrationsExecuted)
 
   // ── Step 2: Boot ActorSystem ──────────────────────────────────────────────
-  given system: ActorSystem[Nothing] =
+  val system: ActorSystem[Nothing] =
     ActorSystem(Behaviors.empty, "inventory-service", config)
 
-  given ec: ExecutionContext = system.executionContext
+  given ActorSystem[Nothing] = system
+  given ExecutionContext      = system.executionContext
 
   // ── Step 3: Wire infrastructure ───────────────────────────────────────────
   val db = Database.forURL(

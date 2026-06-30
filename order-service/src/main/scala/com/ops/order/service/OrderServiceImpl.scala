@@ -25,17 +25,17 @@ class OrderServiceImpl(
   // ── Create order ─────────────────────────────────────────────────────────────
   override def createOrder(req: CreateOrderRequest, traceId: String): Future[Either[ServiceError, OrderResponse]] = {
     val orderId = UUID.randomUUID().toString
-    val cmd = CreateOrder(
-      orderId         = orderId,
-      customerId      = req.customerId,
-      items           = req.items,
-      shippingAddress = req.shippingAddress,
-      totalAmount     = req.items.map(i => i.unitPrice * i.quantity).sum,
-      idempotencyKey  = req.idempotencyKey,
-      replyTo         = _
-    )
-
-    ask(cmd).flatMap {
+    ask { ref =>
+      CreateOrder(
+        orderId         = orderId,
+        customerId      = req.customerId,
+        items           = req.items,
+        shippingAddress = req.shippingAddress,
+        totalAmount     = req.items.map(i => i.unitPrice * i.quantity).sum,
+        idempotencyKey  = req.idempotencyKey,
+        replyTo         = ref
+      )
+    }.flatMap {
       case OrderCreatedReply(order) =>
         // Persist to DB (read model) + publish Kafka event
         repository.save(order)
