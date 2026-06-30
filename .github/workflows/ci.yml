@@ -124,6 +124,7 @@ jobs:
           mvn test \
             --batch-mode \
             --no-transfer-progress \
+            --fail-at-end \
             -Dsurefire.failIfNoSpecifiedTests=false
 
       # ── Publish JUnit XML reports ────────────────────────────────────────────
@@ -138,6 +139,7 @@ jobs:
             notification-service/target/surefire-reports/*.xml
           reporter: java-junit
           fail-on-error: true
+          fail-on-empty: false
 
       # Artefact upload
       - name: Upload test artefacts

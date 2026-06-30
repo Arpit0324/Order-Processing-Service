@@ -2,6 +2,8 @@ package com.ops.inventory.repository
 
 import com.ops.inventory.domain.InventoryItem
 import com.ops.shared.serialization.JsonCodecs.given
+import io.circe.Codec
+import io.circe.generic.semiauto.deriveCodec
 import io.circe.syntax.*
 import io.circe.parser.*
 import io.lettuce.core.RedisClient
@@ -23,6 +25,8 @@ class InventoryCache(
   redis:    RedisAsyncCommands[String, String],
   ttlSecs:  Long = 300
 )(using ec: ExecutionContext) extends InventoryRepository {
+
+  private given Codec[InventoryItem] = deriveCodec
 
   private val log = LoggerFactory.getLogger(getClass)
   private val Prefix = "ops:inventory:"
