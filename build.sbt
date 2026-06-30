@@ -19,10 +19,10 @@ ThisBuild / testOptions += Tests.Argument(
 )
 
 // ── Dependency Versions ──────────────────────────────────────────────────────
-val akkaVersion         = "2.9.3"
-val akkaHttpVersion     = "10.6.3"
-val akkaPersistenceJdbc = "5.4.1"
-val alpakkaKafkaVersion = "5.0.0"
+val pekkoVersion         = "1.1.3"
+val pekkoHttpVersion     = "1.1.0"
+val pekkoPersistenceJdbc = "1.1.0"
+val pekkoKafkaVersion    = "1.1.0"
 val slickVersion        = "3.5.1"
 val circeVersion        = "0.14.9"
 val flywayVersion       = "10.15.0"
@@ -55,16 +55,16 @@ lazy val orderService = (project in file("order-service"))
   .settings(
     name := "order-service",
     libraryDependencies ++= commonDeps ++ Seq(
-      // Akka
-      "com.typesafe.akka"  %% "akka-actor-typed"          % akkaVersion,
-      "com.typesafe.akka"  %% "akka-persistence-typed"    % akkaVersion,
-      "com.typesafe.akka"  %% "akka-persistence-query"    % akkaVersion,
-      "com.typesafe.akka"  %% "akka-http"                 % akkaHttpVersion,
-      "com.typesafe.akka"  %% "akka-http-spray-json"      % akkaHttpVersion,
-      "com.typesafe.akka"  %% "akka-stream"               % akkaVersion,
-      "com.typesafe.akka"  %% "akka-stream-kafka"         % alpakkaKafkaVersion,
+      // Pekko
+      "org.apache.pekko"   %% "pekko-actor-typed"          % pekkoVersion,
+      "org.apache.pekko"   %% "pekko-persistence-typed"    % pekkoVersion,
+      "org.apache.pekko"   %% "pekko-persistence-query"    % pekkoVersion,
+      "org.apache.pekko"   %% "pekko-http"                 % pekkoHttpVersion,
+      "org.apache.pekko"   %% "pekko-http-spray-json"      % pekkoHttpVersion,
+      "org.apache.pekko"   %% "pekko-stream"               % pekkoVersion,
+      "org.apache.pekko"   %% "pekko-connectors-kafka"     % pekkoKafkaVersion,
       // Persistence
-      "com.lightbend.akka" %% "akka-persistence-jdbc"     % akkaPersistenceJdbc,
+      "org.apache.pekko"   %% "pekko-persistence-jdbc"     % pekkoPersistenceJdbc,
       "com.typesafe.slick" %% "slick"                     % slickVersion,
       "com.typesafe.slick" %% "slick-hikaricp"            % slickVersion,
       "org.postgresql"      % "postgresql"                % postgresVersion,
@@ -75,11 +75,11 @@ lazy val orderService = (project in file("order-service"))
       "io.circe"           %% "circe-core"                % circeVersion,
       "io.circe"           %% "circe-generic"             % circeVersion,
       "io.circe"           %% "circe-parser"              % circeVersion,
-      "de.heikoseeberger"  %% "akka-http-circe"           % "1.39.2",
+      "com.github.pjfanning" %% "pekko-http-circe"          % "3.0.0",
       // Test
-      "com.typesafe.akka"  %% "akka-actor-testkit-typed"  % akkaVersion        % Test,
-      "com.typesafe.akka"  %% "akka-stream-testkit"       % akkaVersion        % Test,
-      "com.typesafe.akka"  %% "akka-http-testkit"         % akkaHttpVersion    % Test,
+      "org.apache.pekko"   %% "pekko-actor-testkit-typed"  % pekkoVersion       % Test,
+      "org.apache.pekko"   %% "pekko-stream-testkit"       % pekkoVersion       % Test,
+      "org.apache.pekko"   %% "pekko-http-testkit"         % pekkoHttpVersion   % Test,
       "com.dimafeng"       %% "testcontainers-scala-postgresql" % testcontainersVersion % Test,
       "com.dimafeng"       %% "testcontainers-scala-kafka"      % testcontainersVersion % Test
     ),
@@ -101,11 +101,11 @@ lazy val inventoryService = (project in file("inventory-service"))
   .settings(
     name := "inventory-service",
     libraryDependencies ++= commonDeps ++ Seq(
-      // Akka Streams
-      "com.typesafe.akka"  %% "akka-stream"               % akkaVersion,
-      "com.typesafe.akka"  %% "akka-http"                 % akkaHttpVersion,
-      "com.typesafe.akka"  %% "akka-http-spray-json"      % akkaHttpVersion,
-      "com.typesafe.akka"  %% "akka-stream-kafka"         % alpakkaKafkaVersion,
+      // Pekko Streams
+      "org.apache.pekko"   %% "pekko-stream"               % pekkoVersion,
+      "org.apache.pekko"   %% "pekko-http"                 % pekkoHttpVersion,
+      "org.apache.pekko"   %% "pekko-http-spray-json"      % pekkoHttpVersion,
+      "org.apache.pekko"   %% "pekko-connectors-kafka"     % pekkoKafkaVersion,
       // Persistence
       "com.typesafe.slick" %% "slick"                     % slickVersion,
       "com.typesafe.slick" %% "slick-hikaricp"            % slickVersion,
@@ -119,10 +119,10 @@ lazy val inventoryService = (project in file("inventory-service"))
       "io.circe"           %% "circe-core"                % circeVersion,
       "io.circe"           %% "circe-generic"             % circeVersion,
       "io.circe"           %% "circe-parser"              % circeVersion,
-      "de.heikoseeberger"  %% "akka-http-circe"           % "1.39.2",
+      "com.github.pjfanning" %% "pekko-http-circe"          % "3.0.0",
       // Test
-      "com.typesafe.akka"  %% "akka-stream-testkit"       % akkaVersion        % Test,
-      "com.typesafe.akka"  %% "akka-http-testkit"         % akkaHttpVersion    % Test,
+      "org.apache.pekko"   %% "pekko-stream-testkit"       % pekkoVersion       % Test,
+      "org.apache.pekko"   %% "pekko-http-testkit"         % pekkoHttpVersion   % Test,
       "com.dimafeng"       %% "testcontainers-scala-postgresql" % testcontainersVersion % Test,
       "com.dimafeng"       %% "testcontainers-scala-kafka"      % testcontainersVersion % Test,
       "com.dimafeng"       %% "testcontainers-scala-redis"      % testcontainersVersion % Test

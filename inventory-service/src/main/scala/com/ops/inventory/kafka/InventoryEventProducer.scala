@@ -1,8 +1,8 @@
 package com.ops.inventory.kafka
 
-import akka.actor.typed.ActorSystem
-import akka.kafka.ProducerSettings
-import akka.kafka.scaladsl.SendProducer
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.kafka.ProducerSettings
+import org.apache.pekko.kafka.scaladsl.SendProducer
 import com.ops.shared.domain.ItemLine
 import com.ops.shared.events.{InventoryUpdatedEvent, OrderCancelRequestedEvent}
 import com.ops.shared.serialization.JsonCodecs.given

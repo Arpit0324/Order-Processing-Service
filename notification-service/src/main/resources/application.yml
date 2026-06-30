@@ -64,10 +64,10 @@ management:
     health:
       show-details: always
 
-akka:
+pekko:
   actor:
     provider: local
   loggers:
-    - akka.event.slf4j.Slf4jLogger
+    - org.apache.pekko.event.slf4j.Slf4jLogger
   loglevel: INFO
-  logging-filter: akka.event.slf4j.Slf4jLoggingFilter
+  logging-filter: org.apache.pekko.event.slf4j.Slf4jLoggingFilter

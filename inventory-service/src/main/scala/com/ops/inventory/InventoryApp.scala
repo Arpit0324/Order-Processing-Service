@@ -1,8 +1,8 @@
 package com.ops.inventory
 
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.Behaviors
-import akka.http.scaladsl.Http
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.http.scaladsl.Http
 import com.ops.inventory.api.InventoryController
 import com.ops.inventory.kafka.InventoryEventProducer
 import com.ops.inventory.repository.{InventoryCache, InventoryRepositoryImpl}

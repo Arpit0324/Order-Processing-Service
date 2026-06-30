@@ -1,8 +1,8 @@
 package com.ops.order
 
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.Behaviors
-import akka.http.scaladsl.Http
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.http.scaladsl.Http
 import com.ops.order.actor.OrderSupervisor
 import com.ops.order.api.OrderController
 import com.ops.order.infra.{DatabaseConfig, FlywayMigration}

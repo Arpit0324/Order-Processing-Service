@@ -1,10 +1,10 @@
 package com.ops.inventory.stream
 
-import akka.actor.typed.ActorSystem
-import akka.kafka.{CommitterSettings, ConsumerSettings, Subscriptions}
-import akka.kafka.scaladsl.{Committer, Consumer}
-import akka.stream.scaladsl.{Keep, RestartSource, Sink}
-import akka.stream.{KillSwitches, RestartSettings, SharedKillSwitch}
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.kafka.{CommitterSettings, ConsumerSettings, Subscriptions}
+import org.apache.pekko.kafka.scaladsl.{Committer, Consumer}
+import org.apache.pekko.stream.scaladsl.{Keep, RestartSource, Sink}
+import org.apache.pekko.stream.{KillSwitches, RestartSettings, SharedKillSwitch}
 import com.ops.inventory.service.{AllReserved, InventoryService, PartiallyFailed}
 import com.ops.shared.events.{OrderCancelledEvent, OrderCreatedEvent, OrderReturnedEvent}
 import com.ops.shared.serialization.JsonCodecs.given
@@ -24,7 +24,7 @@ class InventoryStream(service: InventoryService)(using system: ActorSystem[?], e
   private val config = system.settings.config
 
   private val consumerSettings: ConsumerSettings[String, String] =
-    ConsumerSettings(config.getConfig("akka.kafka.consumer"), new StringDeserializer, new StringDeserializer)
+    ConsumerSettings(config.getConfig("pekko.kafka.consumer"), new StringDeserializer, new StringDeserializer)
       .withBootstrapServers(config.getString("kafka.bootstrap-servers"))
       .withGroupId("inventory-service")
       .withProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
@@ -32,7 +32,7 @@ class InventoryStream(service: InventoryService)(using system: ActorSystem[?], e
       .withProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "100")
 
   private val committerSettings: CommitterSettings =
-    CommitterSettings(config.getConfig("akka.kafka.committer"))
+    CommitterSettings(config.getConfig("pekko.kafka.committer"))
       .withMaxBatch(500)
       .withMaxInterval(5.seconds)
 
