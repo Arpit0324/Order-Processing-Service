@@ -1,6 +1,6 @@
 # Notification Service
 
-Sends multi-channel notifications (email, SMS) in response to Kafka events from the order lifecycle. Built with **Java 21 + Spring Boot 3 + Akka Typed**. Kafka messages are consumed by Spring `@KafkaListener` and dispatched to Akka actors for async delivery.
+Sends multi-channel notifications (email, SMS) in response to Kafka events from the order lifecycle. Built with **Java 21 + Spring Boot 3 + Pekko Typed**. Kafka messages are consumed by Spring `@KafkaListener` and dispatched to Pekko actors for async delivery.
 
 ---
 
@@ -30,7 +30,7 @@ NotificationServiceImpl (@Service, @Transactional)
     │
     ├─► NotificationRepository (persist record to DB)
     │
-    ├─► NotificationRouter (Akka Typed actor)
+    ├─► NotificationRouter (Pekko Typed actor)
     │       │
     │       ├─► EmailNotificationActor (pool × 4)
     │       └─► SmsNotificationActor   (pool × 2)
@@ -47,7 +47,7 @@ NotificationServiceImpl (@Service, @Transactional)
 | Language | Java 21 |
 | Web framework | Spring Boot 3.3.1 |
 | Kafka consumer | Spring Kafka with `@RetryableTopic` |
-| Actor model | Akka Typed 2.9.3 (Java API) |
+| Actor model | Pekko Typed 1.1.3 (Java API) |
 | Database | Spring Data JPA + PostgreSQL |
 | DB migrations | Flyway 10.15.0 (auto-run by Spring Boot) |
 | JSON | Jackson with JSR-310 (Instant support) |

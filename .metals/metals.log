@@ -1015,3 +1015,10 @@ INFO: Unsupported notification method: $/setTrace
 2026.06.30 19:03:15 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\main\scala\com\ops\order\service\OrderService.scala. Using presentation compiler with project's scala-library version: 3.3.7
 Jun 30, 2026 7:09:31 PM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
 INFO: Unsupported notification method: $/setTrace
+2026.06.30 19:11:31 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\main\scala\com\ops\order\service\OrderService.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 19:11:31 WARN  no build target for: C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\main\scala\com\ops\order\service\OrderService.scala
+2026.06.30 19:11:31 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\main\scala\com\ops\order\service\OrderService.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 19:14:08 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\test\scala\com\ops\order\domain\OrderSpec.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 19:14:08 WARN  no build target for: C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\test\scala\com\ops\order\domain\OrderSpec.scala
+2026.06.30 19:14:09 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\main\scala\com\ops\order\service\OrderService.scala. Using presentation compiler with project's scala-library version: 3.3.7
+2026.06.30 19:17:08 INFO  no build target found for C:\tmp\arpit\java\Arpit\order-processing-system-structure\order-service\src\test\scala\com\ops\order\domain\OrderSpec.scala. Using presentation compiler with project's scala-library version: 3.3.7
