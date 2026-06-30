@@ -1,8 +1,8 @@
 package com.ops.notification.config;
 
-import akka.actor.typed.ActorRef;
-import akka.actor.typed.ActorSystem;
-import akka.actor.typed.javadsl.Behaviors;
+import org.apache.pekko.actor.typed.ActorRef;
+import org.apache.pekko.actor.typed.ActorSystem;
+import org.apache.pekko.actor.typed.javadsl.Behaviors;
 import com.ops.notification.actor.NotificationCommand;
 import com.ops.notification.actor.NotificationRouter;
 import com.typesafe.config.ConfigFactory;
@@ -16,7 +16,7 @@ public class AkkaConfig {
     @Bean(destroyMethod = "terminate")
     public ActorSystem<Void> actorSystem() {
         return ActorSystem.create(Behaviors.empty(), "notification-system",
-                ConfigFactory.load().getConfig("akka"));
+                ConfigFactory.load().getConfig("pekko"));
     }
 
     @Bean

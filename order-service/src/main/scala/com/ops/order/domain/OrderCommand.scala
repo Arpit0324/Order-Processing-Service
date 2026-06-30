@@ -1,7 +1,7 @@
 package com.ops.order.domain
 
 import com.ops.shared.domain.{ItemLine, ShippingAddress}
-import akka.actor.typed.ActorRef
+import org.apache.pekko.actor.typed.ActorRef
 import java.time.Instant
 
 // ── Commands — sent TO the OrderActor ────────────────────────────────────────

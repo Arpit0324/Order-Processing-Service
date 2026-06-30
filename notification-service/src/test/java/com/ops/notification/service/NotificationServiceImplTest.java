@@ -1,6 +1,6 @@
 package com.ops.notification.service;
 
-import akka.actor.typed.ActorRef;
+import org.apache.pekko.actor.typed.ActorRef;
 import com.ops.notification.actor.NotificationCommand;
 import com.ops.notification.domain.NotificationRecord;
 import com.ops.notification.dto.NotificationResponse;

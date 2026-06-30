@@ -17,11 +17,11 @@ class InventoryServiceImpl(
   private val MaxLockRetries = 3
 
   override def getItem(productId: String): Future[Option[InventoryResponse]] =
-    repository.findById(productId).map(_.map(InventoryResponse.from))
+    repository.findById(productId).map(_.map(item => InventoryResponse.from(item)))
 
   override def listItems(page: Int, pageSize: Int): Future[(List[InventoryResponse], Int)] =
     repository.findAll(page, pageSize).map { case (items, total) =>
-      (items.map(InventoryResponse.from), total)
+      (items.map(item => InventoryResponse.from(item)), total)
     }
 
   // ── Core: reserve stock for every item in the order ──────────────────────────
@@ -54,11 +54,11 @@ class InventoryServiceImpl(
   override def restockFromReturn(productId: String, qty: Int, traceId: String): Future[Option[InventoryResponse]] =
     repository.restockFromReturn(productId, qty)
       .flatMap { result =>
-        producer.publishRestocked(productId, qty, traceId).map(_ => result.map(InventoryResponse.from))
+        producer.publishRestocked(productId, qty, traceId).map(_ => result.map(item => InventoryResponse.from(item)))
       }
 
   override def updateStock(productId: String, delta: Int, traceId: String): Future[Option[InventoryResponse]] =
-    repository.updateQuantity(productId, delta).map(_.map(InventoryResponse.from))
+    repository.updateQuantity(productId, delta).map(_.map(item => InventoryResponse.from(item)))
 
   // ── Optimistic lock retry ────────────────────────────────────────────────────
   private def reserveWithRetry(orderId: String, productId: String, qty: Int,

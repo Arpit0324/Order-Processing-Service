@@ -1,11 +1,11 @@
 package com.ops.inventory.api
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.*
-import akka.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.server.Directives.*
+import org.apache.pekko.http.scaladsl.server.Route
 import com.ops.inventory.api.dto.*
 import com.ops.inventory.service.InventoryService
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.generic.auto.*
 import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContext
