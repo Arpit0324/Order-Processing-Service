@@ -1,0 +1,87 @@
+# ── IDE ──────────────────────────────────────────────────────────────────────
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Maven build output ───────────────────────────────────────────────────────
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.class
+
+# ── SBT build output ─────────────────────────────────────────────────────────
+project/target/
+project/project/
+project/.sbt-maven-versioning-plugin.sbt
+*.sbt.bak
+
+# ── Scala Metals (LSP server) ────────────────────────────────────────────────
+.metals/
+.metals.json
+metals.sbt
+.metals-diagnostics.json
+
+# ── Bloop (build server used by Metals) ──────────────────────────────────────
+.bloop/
+.bsp/
+
+# ── Scala / SBT caches ───────────────────────────────────────────────────────
+.scala-build/
+.cache-main
+.cache
+
+# ── Compiled / packaged artifacts ─────────────────────────────────────────────
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+log/
+
+# ── Spring Boot ──────────────────────────────────────────────────────────────
+application.local.conf
+application-local.yml
+application-local.properties
+application-secret.yml
+
+# ── Environment / secrets ────────────────────────────────────────────────────
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.jks
+secrets.properties
+
+# ── Test output ───────────────────────────────────────────────────────────────
+surefire-reports/
+failsafe-reports/
+test-results/
+coverage/
+jacoco.exec
+*.lcov
+
+# ── Docker ───────────────────────────────────────────────────────────────────
+.docker/
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+.java-version
+tmp/
+temp/
