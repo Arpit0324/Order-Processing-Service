@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="order-processing-system-structure_1475:test [file:///C:/tmp/arpit/java/Arpit/order-processing-system-structure/]" external.linked.project.path="C:\tmp\arpit\java\Arpit\order-processing-system-structure" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="SBT" external.system.module.type="sbtSourceSet" type="JAVA_MODULE" version="4">
+  <component name="DisplayModuleName">
+    <option name="name" value="order-processing-system-structure_1475.test" />
+  </component>
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_23">
+    <exclude-output />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+  <component name="TestModuleProperties" production-module="order-processing-system-structure_1475.main" />
+</module>

@@ -398,3 +398,7 @@ Jun 29, 2026 3:18:46 PM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notif
 INFO: Unsupported notification method: $/setTrace
 Jun 29, 2026 3:20:03 PM org.eclipse.lsp4j.jsonrpc.services.GenericEndpoint notify
 INFO: Unsupported notification method: $/setTrace
+2026.06.29 16:13:25 INFO  Shutting down server
+2026.06.29 16:13:25 INFO  Memory monitor stopped
+2026.06.29 16:13:25 INFO  shutting down Metals
+2026.06.29 16:13:25 INFO  Exiting server
