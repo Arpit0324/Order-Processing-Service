@@ -85,3 +85,16 @@ jacoco.exec
 .java-version
 tmp/
 temp/
+.bloop/
+.bsp/
+.metals/
+
+target/
+project/target/
+project/project/
+
+.vscode/
+
+.idea/
+
+*.class
