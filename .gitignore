@@ -85,3 +85,6 @@ jacoco.exec
 .java-version
 tmp/
 temp/
+
+.metals/metals.log
+target/streams/
