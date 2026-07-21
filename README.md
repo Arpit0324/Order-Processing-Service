@@ -1,6 +1,6 @@
 # Order Processing System
 
-A production-grade polyglot microservices system for order lifecycle management, built with Scala + Akka, Java + Spring Boot, Kafka, PostgreSQL, Redis, and Kubernetes.
+A production-grade polyglot microservices system for order lifecycle management, built with Scala + Apache Pekko, Java + Spring Boot, Kafka, PostgreSQL, Redis, and Kubernetes.
 
 ---
 
@@ -20,7 +20,7 @@ Client / Browser
  Order Svc   Inventory   Notification
  :8081       Svc :8082   Svc :8083
  Scala +     Scala +     Java +
- Akka Actors Akka Streams Spring + Akka
+ Pekko Actors Pekko Streams Spring + Pekko
        │          │          │
        └──────────┼──────────┘
                   ▼
@@ -41,63 +41,187 @@ Client / Browser
 | Service | Language | Port | Description |
 |---------|----------|------|-------------|
 | [api-gateway](./api-gateway/README.md) | Java 21 + Spring Boot 3 | 8080 | JWT auth, routing, rate-limit, circuit breaker, Swagger |
-| [order-service](./order-service/README.md) | Scala 3 + Akka Typed | 8081 | Order lifecycle with event sourcing, saga compensation |
-| [inventory-service](./inventory-service/README.md) | Scala 3 + Akka Streams | 8082 | Stock reservation, reactive Kafka pipeline, Redis cache |
+| [order-service](./order-service/README.md) | Scala 3 + Pekko Typed | 8081 | Order lifecycle with event sourcing, saga compensation |
+| [inventory-service](./inventory-service/README.md) | Scala 3 + Pekko Streams | 8082 | Stock reservation, reactive Kafka pipeline, Redis cache |
 | [notification-service](./notification-service/README.md) | Java 21 + Spring Boot 3 | 8083 | Multi-channel notifications (email/SMS), Kafka consumer |
 | [shared](./shared/README.md) | Scala 3 | — | Kafka event schemas, JSON codecs, domain value objects |
 
 ---
 
-## Quick Start — Local Development
+## Local Development
 
 ### Prerequisites
 
-- Docker Desktop 4.x+
-- JDK 21 (`java -version`)
-- SBT 1.10+ (`sbt --version`)
-- Maven 3.9+ (`mvn --version`)
+| Tool | Minimum version | Check |
+|------|----------------|-------|
+| Docker Desktop | 4.x | `docker --version` |
+| JDK | 21 | `java -version` |
+| SBT | 1.10 | `sbt --version` |
+| Maven | 3.9 | `mvn --version` |
 
-### 1. Setup environment
+---
+
+### Step 1 — Compile
+
+The project uses two build tools: **SBT** for the Scala services and **Maven** for the Java services.
 
 ```bash
-cp .env.example .env
-# Edit .env if needed (defaults work out of the box)
+# Scala services: shared + order-service + inventory-service
+sbt compile
+
+# Java services: api-gateway + notification-service
+mvn compile
 ```
 
-### 2. Build all services
+Compile a single service:
 
 ```bash
-# Build Scala services (order-service + inventory-service + shared)
-sbt clean assembly
-
-# Build Java services (api-gateway + notification-service)
-mvn clean package -DskipTests
+sbt "orderService/compile"          # order-service only
+sbt "inventoryService/compile"      # inventory-service only
+mvn -pl api-gateway compile         # api-gateway only
+mvn -pl notification-service compile  # notification-service only
 ```
 
-### 3. Start everything
+---
+
+### Step 2 — Test
+
+#### Scala services (ScalaTest + optional Testcontainers)
 
 ```bash
+# All Scala tests
+sbt test
+
+# Per-service
+sbt "orderService/test"
+sbt "inventoryService/test"
+sbt "shared/test"
+
+# Single spec
+sbt "orderService/testOnly com.ops.order.domain.OrderSpec"
+sbt "orderService/testOnly com.ops.order.domain.OrderStatusSpec"
+
+# Watch mode — re-runs on every file save
+sbt "~orderService/test"
+```
+
+JUnit XML reports are written to `<service>/target/test-reports/` for CI.
+
+#### Java services (JUnit 5 + Spring Boot Test)
+
+```bash
+# All Java tests
+mvn test
+
+# Per-service
+mvn -pl api-gateway test
+mvn -pl notification-service test
+
+# Skip tests (build only)
+mvn package -DskipTests
+```
+
+> **Note:** Integration tests that use Testcontainers require Docker to be running.
+
+---
+
+### Step 3 — Run
+
+#### Option A — Full stack with Docker Compose (recommended)
+
+```bash
+# Build images and start all 9 containers
 docker-compose up --build
 ```
 
-This starts 9 containers:
-- `postgres` — 3 databases (`ops_orders`, `ops_inventory`, `ops_notifications`)
-- `redis` — cache + rate-limit counters
-- `kafka` — KRaft mode (no Zookeeper)
-- `kafka-init` — creates all 9 Kafka topics then exits
-- `kafka-ui` — browse topics and consumer groups
-- `api-gateway` — Spring Cloud Gateway
-- `order-service` — Akka Typed persistent actors
-- `inventory-service` — Akka Streams reactive pipeline
-- `notification-service` — Spring Boot + Akka
+Containers started:
 
-### 4. Verify everything is running
+| Container | Port | Description |
+|-----------|------|-------------|
+| `postgres` | 5432 | 3 databases: `ops_orders`, `ops_inventory`, `ops_notifications` |
+| `redis` | 6379 | Cache + rate-limit counters |
+| `kafka` | 9092 | KRaft mode (no Zookeeper) |
+| `kafka-init` | — | Creates 9 Kafka topics then exits |
+| `kafka-ui` | 8090 | Kafka topic browser |
+| `api-gateway` | 8080 | Spring Cloud Gateway |
+| `order-service` | 8081 | Pekko Typed persistent actors |
+| `inventory-service` | 8082 | Pekko Streams reactive pipeline |
+| `notification-service` | 8083 | Spring Boot + Pekko |
+
+#### Option B — Infra only, services from source
+
+Useful when iterating on a single service without rebuilding Docker images.
 
 ```bash
-curl http://localhost:8080/actuator/health   # Gateway
+# 1. Start only the backing infrastructure
+docker-compose up -d postgres redis kafka kafka-init
+
+# 2a. Run a Scala service via SBT (pick one)
+sbt "orderService/run"
+sbt "inventoryService/run"
+
+# 2b. Run a Java service via Maven (pick one)
+mvn -pl api-gateway spring-boot:run
+mvn -pl notification-service spring-boot:run
+
+# 2c. Or run a fat JAR built earlier
+java -jar order-service/target/scala-3.4.2/order-service.jar
+java -jar api-gateway/target/api-gateway-*.jar
+```
+
+#### Option C — IDE
+
+Run these main classes directly from IntelliJ or VS Code:
+
+| Service | Main class |
+|---------|------------|
+| order-service | `com.ops.order.OrderServiceApp` |
+| inventory-service | `com.ops.inventory.InventoryServiceApp` |
+| api-gateway | `com.ops.gateway.ApiGatewayApplication` |
+| notification-service | `com.ops.notification.NotificationApplication` |
+
+Ensure the environment variables in the table below are set in each run configuration.
+
+---
+
+### Step 4 — Verify everything is up
+
+```bash
+curl http://localhost:8080/actuator/health   # API Gateway
 curl http://localhost:8081/health            # Order Service
 curl http://localhost:8082/health            # Inventory Service
 curl http://localhost:8083/actuator/health   # Notification Service
+```
+
+All four should return `200 OK` before sending any API traffic.
+
+---
+
+### Environment Variables
+
+All services start with sensible defaults — no `.env` file is required for local dev with Docker Compose.
+When running services standalone (Option B/C), set these as needed:
+
+| Variable | Default | Used by |
+|----------|---------|--------|
+| `HTTP_PORT` | `8081` / `8082` / `8080` / `8083` | each service |
+| `DB_URL` | `jdbc:postgresql://localhost:5432/<db>` | order, inventory, notification |
+| `DB_USER` | `ops` | order, inventory, notification |
+| `DB_PASSWORD` | `changeme` | order, inventory, notification |
+| `KAFKA_BOOTSTRAP` | `localhost:9092` | all services |
+| `REDIS_HOST` | `localhost` | inventory-service |
+| `JWT_SECRET` | `dev-secret` | api-gateway |
+
+---
+
+### Stop and clean up
+
+```bash
+# Stop all containers (keep volumes)
+docker-compose down
+
+# Stop and wipe all data volumes (full reset)
+docker-compose down -v
 ```
 
 ---
@@ -152,7 +276,7 @@ CANCELLED       CANCELLED                                  RETURN_REQUESTED
                                                          RETURNED   FULFILLED
 ```
 
-Stale `PENDING` orders auto-cancel after **15 minutes** via Akka timer.
+Stale `PENDING` orders auto-cancel after **15 minutes** via Pekko timer.
 
 ---
 
@@ -200,9 +324,9 @@ order-processing-system/
 ├── plan.md                   Full HLD + LLD + architecture documentation
 │
 ├── shared/                   Kafka event schemas (Scala — imported by all services)
-├── order-service/            Scala 3 + Akka Typed + Akka Persistence
-├── inventory-service/        Scala 3 + Akka Streams + Redis
-├── notification-service/     Java 21 + Spring Boot 3 + Akka
+├── order-service/            Scala 3 + Pekko Typed + Pekko Persistence
+├── inventory-service/        Scala 3 + Pekko Streams + Redis
+├── notification-service/     Java 21 + Spring Boot 3 + Pekko
 ├── api-gateway/              Java 21 + Spring Cloud Gateway
 │
 ├── infra/postgres/           PostgreSQL multi-database init script
@@ -244,28 +368,28 @@ kubectl get hpa -n ops-system
 
 ---
 
-## Build Commands
+## Build Reference
 
 ```bash
-# Scala services
-sbt clean assembly                    # Build all Scala modules
-sbt "orderService/assembly"           # Build only order-service
-sbt test                              # Run all Scala tests
+# ── Scala (SBT) ──────────────────────────────────────────────────────────────
+sbt compile                           # Compile all Scala modules
+sbt test                              # Test all Scala modules
+sbt clean assembly                    # Build all fat JARs
+sbt "orderService/assembly"           # Fat JAR for order-service only
+sbt "inventoryService/assembly"       # Fat JAR for inventory-service only
 
-# Java services
-mvn clean package -DskipTests         # Build all Java modules
+# ── Java (Maven) ─────────────────────────────────────────────────────────────
+mvn compile                           # Compile all Java modules
+mvn test                              # Test all Java modules
+mvn clean package -DskipTests         # Build all JARs (skip tests)
 mvn -pl api-gateway package           # Build only api-gateway
-mvn test                              # Run all Java tests
+mvn -pl notification-service package  # Build only notification-service
 
-# Docker (individual service)
-docker build -t ops/order-service ./order-service
-docker build -t ops/inventory-service ./inventory-service
+# ── Docker images ─────────────────────────────────────────────────────────────
+docker build -t ops/order-service        ./order-service
+docker build -t ops/inventory-service    ./inventory-service
 docker build -t ops/notification-service ./notification-service
-docker build -t ops/api-gateway ./api-gateway
-
-# Full stack
-docker-compose up --build             # Start all
-docker-compose down -v                # Stop + wipe volumes
+docker build -t ops/api-gateway          ./api-gateway
 ```
 
 ---
@@ -276,7 +400,7 @@ docker-compose down -v                # Stop + wipe volumes
 |-----------|---------|---------|
 | Scala | 3.4.2 | Order Service, Inventory Service, Shared |
 | Java | 21 | API Gateway, Notification Service |
-| Akka Typed | 2.9.3 | Actor model, event sourcing, streaming |
+| Apache Pekko Typed | 1.1.3 | Actor model, event sourcing, streaming |
 | Spring Boot | 3.3.1 | Gateway, Notification REST + Kafka |
 | Spring Cloud Gateway | 2023.0.2 | Reactive proxy + circuit breaker |
 | Apache Kafka | 7.6.1 (KRaft) | Async event bus |

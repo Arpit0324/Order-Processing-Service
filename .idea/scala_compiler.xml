@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="sbt 1" modules="order-processing-system-structure_1475,order-processing-system-structure_1475.main,order-processing-system-structure_1475.test" />
+    <option name="separateProdTestSources" value="true" />
+    <profile name="sbt 1" modules="order-processing-system,order-processing-system-structure_1475,order-processing-system-structure_1475.main,order-processing-system-structure_1475.test,order-processing-system.inventory-service,order-processing-system.inventory-service.main,order-processing-system.inventory-service.test,order-processing-system.main,order-processing-system.order-service,order-processing-system.order-service.main,order-processing-system.order-service.test,order-processing-system.shared,order-processing-system.shared.main,order-processing-system.shared.test,order-processing-system.test" />
   </component>
 </project>

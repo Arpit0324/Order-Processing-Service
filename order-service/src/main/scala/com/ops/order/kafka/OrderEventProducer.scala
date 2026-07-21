@@ -1,8 +1,8 @@
 package com.ops.order.kafka
 
-import akka.actor.typed.ActorSystem
-import akka.kafka.ProducerSettings
-import akka.kafka.scaladsl.SendProducer
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.kafka.ProducerSettings
+import org.apache.pekko.kafka.scaladsl.SendProducer
 import com.ops.order.domain.Order
 import com.ops.shared.events.*
 import com.ops.shared.serialization.JsonCodecs.given

@@ -1,8 +1,8 @@
 package com.ops.order.service
 
-import akka.actor.typed.{ActorRef, ActorSystem}
-import akka.actor.typed.scaladsl.AskPattern.*
-import akka.util.Timeout
+import org.apache.pekko.actor.typed.{ActorRef, ActorSystem}
+import org.apache.pekko.actor.typed.scaladsl.AskPattern.*
+import org.apache.pekko.util.Timeout
 import com.ops.order.actor.OrderSupervisor
 import com.ops.order.api.dto.*
 import com.ops.order.domain.*
@@ -25,17 +25,17 @@ class OrderServiceImpl(
   // ── Create order ─────────────────────────────────────────────────────────────
   override def createOrder(req: CreateOrderRequest, traceId: String): Future[Either[ServiceError, OrderResponse]] = {
     val orderId = UUID.randomUUID().toString
-    val cmd = CreateOrder(
-      orderId         = orderId,
-      customerId      = req.customerId,
-      items           = req.items,
-      shippingAddress = req.shippingAddress,
-      totalAmount     = req.items.map(i => i.unitPrice * i.quantity).sum,
-      idempotencyKey  = req.idempotencyKey,
-      replyTo         = _
-    )
-
-    ask(cmd).flatMap {
+    ask { ref =>
+      CreateOrder(
+        orderId         = orderId,
+        customerId      = req.customerId,
+        items           = req.items,
+        shippingAddress = req.shippingAddress,
+        totalAmount     = req.items.map(i => i.unitPrice * i.quantity).sum,
+        idempotencyKey  = req.idempotencyKey,
+        replyTo         = ref
+      )
+    }.flatMap {
       case OrderCreatedReply(order) =>
         // Persist to DB (read model) + publish Kafka event
         repository.save(order)

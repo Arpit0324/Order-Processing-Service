@@ -1,11 +1,11 @@
 package com.ops.order.api
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.*
-import akka.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.server.Directives.*
+import org.apache.pekko.http.scaladsl.server.Route
 import com.ops.order.api.dto.*
 import com.ops.order.service.{DuplicateRequest, InternalError, InvalidTransition, NotFound, OrderService, ValidationError}
-import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport.*
+import com.github.pjfanning.pekkohttpcirce.FailFastCirceSupport.*
 import io.circe.generic.auto.*
 import io.circe.syntax.*
 import java.time.Instant
@@ -92,6 +92,7 @@ class OrderController(service: OrderService)(using ec: ExecutionContext) {
             case Success(Right(resp))                      => complete(StatusCodes.OK, resp)
             case Success(Left(NotFound(_)))                => complete(StatusCodes.NotFound, error("NOT_FOUND", s"Order $id not found", traceId))
             case Success(Left(InvalidTransition(reason))) => complete(StatusCodes.Conflict, error("INVALID_TRANSITION", reason, traceId))
+            case Success(Left(err))                       => complete(StatusCodes.BadRequest, error("BAD_REQUEST", err.toString, traceId))
             case Failure(ex)                              => complete(StatusCodes.InternalServerError, error("INTERNAL_ERROR", ex.getMessage, traceId))
           }
         }
@@ -103,6 +104,7 @@ class OrderController(service: OrderService)(using ec: ExecutionContext) {
             case Success(Right(resp))                      => complete(StatusCodes.OK, resp)
             case Success(Left(NotFound(_)))                => complete(StatusCodes.NotFound, error("NOT_FOUND", s"Order $id not found", traceId))
             case Success(Left(InvalidTransition(reason))) => complete(StatusCodes.Conflict, error("INVALID_TRANSITION", reason, traceId))
+            case Success(Left(err))                       => complete(StatusCodes.BadRequest, error("BAD_REQUEST", err.toString, traceId))
             case Failure(ex)                              => complete(StatusCodes.InternalServerError, error("INTERNAL_ERROR", ex.getMessage, traceId))
           }
         }

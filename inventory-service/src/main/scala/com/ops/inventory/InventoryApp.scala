@@ -1,8 +1,8 @@
 package com.ops.inventory
 
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.Behaviors
-import akka.http.scaladsl.Http
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.http.scaladsl.Http
 import com.ops.inventory.api.InventoryController
 import com.ops.inventory.kafka.InventoryEventProducer
 import com.ops.inventory.repository.{InventoryCache, InventoryRepositoryImpl}
@@ -38,10 +38,11 @@ object InventoryApp extends App {
   log.info("Flyway complete: {} migration(s) applied", migrationResult.migrationsExecuted)
 
   // ── Step 2: Boot ActorSystem ──────────────────────────────────────────────
-  given system: ActorSystem[Nothing] =
+  val system: ActorSystem[Nothing] =
     ActorSystem(Behaviors.empty, "inventory-service", config)
 
-  given ec: ExecutionContext = system.executionContext
+  given ActorSystem[Nothing] = system
+  given ExecutionContext      = system.executionContext
 
   // ── Step 3: Wire infrastructure ───────────────────────────────────────────
   val db = Database.forURL(

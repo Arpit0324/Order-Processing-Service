@@ -1,6 +1,6 @@
 # Order Service
 
-Manages the full order lifecycle using **Scala 3 + Akka Typed + Akka Persistence** (event sourcing). Each order is a persistent actor — state is rebuilt from replayed events on restart, giving a complete audit trail for free.
+Manages the full order lifecycle using **Scala 3 + Pekko Typed + Pekko Persistence** (event sourcing). Each order is a persistent actor — state is rebuilt from replayed events on restart, giving a complete audit trail for free.
 
 ---
 
@@ -8,7 +8,7 @@ Manages the full order lifecycle using **Scala 3 + Akka Typed + Akka Persistence
 
 - Create, confirm, cancel, and fulfill orders
 - Event-sourced state machine (7 states)
-- Auto-cancel stale PENDING orders after 15 minutes (Akka timer)
+- Auto-cancel stale PENDING orders after 15 minutes (Pekko timer)
 - Publish `order.created` / `order.cancelled` / `order.returned` Kafka events
 - Consume `inventory.updated` to confirm orders
 - Consume `order.cancel.requested` for saga compensation (insufficient stock)
@@ -49,10 +49,10 @@ Terminal states: `CANCELLED`, `RETURNED`
 | Component | Technology |
 |-----------|-----------|
 | Language | Scala 3.4.2 |
-| Actor model | Akka Typed 2.9.3 |
-| Event sourcing | Akka Persistence JDBC |
-| HTTP server | Akka HTTP 10.6.3 |
-| Kafka producer | Alpakka Kafka 5.0.0 |
+| Actor model | Pekko Typed 1.1.3 |
+| Event sourcing | Pekko Persistence JDBC 1.1.0 |
+| HTTP server | Pekko HTTP 1.1.0 |
+| Kafka producer | Pekko Connectors Kafka 1.1.0 |
 | Database ORM | Slick 3.5.1 + HikariCP |
 | DB migrations | Flyway 10.15.0 |
 | JSON | Circe 0.14.9 |
@@ -61,29 +61,122 @@ Terminal states: `CANCELLED`, `RETURNED`
 
 ## Running Locally
 
-### With Docker Compose (recommended)
+### Prerequisites
+
+| Tool | Minimum version | Check |
+|------|----------------|-------|
+| JDK | 21 | `java -version` |
+| SBT | 1.10 | `sbt --version` |
+| Docker Desktop | 4.x | `docker --version` |
+
+---
+
+### 1. Compile
+
+```bash
+# From project root — compile order-service and its shared dependency
+sbt "orderService/compile"
+
+# Or compile everything (shared + order-service + inventory-service)
+sbt compile
+```
+
+A successful compile prints no errors and exits with code 0.
+
+---
+
+### 2. Test
+
+Unit tests (pure domain logic, no external dependencies):
+
+```bash
+# From project root
+sbt "orderService/test"
+```
+
+Test results are printed to the console and JUnit XML is written to
+`order-service/target/test-reports/` (consumed by CI).
+
+To run a single spec:
+
+```bash
+sbt "orderService/testOnly com.ops.order.domain.OrderSpec"
+sbt "orderService/testOnly com.ops.order.domain.OrderStatusSpec"
+```
+
+To run tests continuously on every file save:
+
+```bash
+sbt "~orderService/test"
+```
+
+---
+
+### 3. Run
+
+#### Option A — Docker Compose (recommended, zero config)
+
+Starts PostgreSQL, Kafka, and the service together:
 
 ```bash
 # From project root
 docker-compose up order-service postgres kafka kafka-init
 ```
 
-### Standalone (requires Postgres + Kafka running)
+The service is ready when you see:
+```
+order-service  | Order Service started on port 8081
+```
+
+#### Option B — Standalone (Postgres + Kafka must already be running)
+
+Start the backing services first:
 
 ```bash
-# From project root
+# From project root — only infra, no application containers
+docker-compose up -d postgres kafka kafka-init
+```
+
+Then run the service from SBT:
+
+```bash
 sbt "orderService/run"
 ```
+
+Or build and run the fat JAR:
+
+```bash
+sbt "orderService/assembly"
+java -jar order-service/target/scala-3.4.2/order-service.jar
+```
+
+#### Option C — IntelliJ / VS Code
+
+Run the main class `com.ops.order.OrderServiceApp` directly from your IDE.
+Ensure the environment variables below are set in the run configuration.
+
+---
 
 ### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `HTTP_PORT` | `8081` | HTTP server port |
-| `DB_URL` | `jdbc:postgresql://localhost:5432/ops_orders` | PostgreSQL URL |
+| `DB_URL` | `jdbc:postgresql://localhost:5432/ops_orders` | PostgreSQL JDBC URL |
 | `DB_USER` | `ops` | DB username |
 | `DB_PASSWORD` | `changeme` | DB password |
 | `KAFKA_BOOTSTRAP` | `localhost:9092` | Kafka bootstrap servers |
+
+All variables have working defaults — no `.env` file is needed for local dev.
+
+---
+
+### Verify the service is up
+
+```bash
+curl http://localhost:8081/health
+# Expected: {"status":"ok"}
+```
 
 ---
 
@@ -137,8 +230,8 @@ Database: `ops_orders`
 | Table | Description |
 |-------|-------------|
 | `orders` | Order records with full lifecycle columns |
-| `order_events` | Akka Persistence event journal |
-| `order_snapshots` | Akka Persistence snapshot store |
+| `order_events` | Pekko Persistence event journal |
+| `order_snapshots` | Pekko Persistence snapshot store |
 
 Migrations: `src/main/resources/db/migration/`
 
@@ -147,8 +240,15 @@ Migrations: `src/main/resources/db/migration/`
 ## Build
 
 ```bash
-# From project root
-sbt "orderService/assembly"           # Build fat JAR
-sbt "orderService/test"               # Run unit tests
+# Compile only
+sbt "orderService/compile"
+
+# Run unit tests
+sbt "orderService/test"
+
+# Build fat JAR (output: order-service/target/scala-3.4.2/order-service.jar)
+sbt "orderService/assembly"
+
+# Build Docker image
 docker build -t ops/order-service ./order-service
 ```

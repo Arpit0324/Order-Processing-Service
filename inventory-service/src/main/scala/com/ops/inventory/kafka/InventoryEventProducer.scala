@@ -1,8 +1,8 @@
 package com.ops.inventory.kafka
 
-import akka.actor.typed.ActorSystem
-import akka.kafka.ProducerSettings
-import akka.kafka.scaladsl.SendProducer
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.kafka.ProducerSettings
+import org.apache.pekko.kafka.scaladsl.SendProducer
 import com.ops.shared.domain.ItemLine
 import com.ops.shared.events.{InventoryUpdatedEvent, OrderCancelRequestedEvent}
 import com.ops.shared.serialization.JsonCodecs.given
@@ -20,7 +20,7 @@ class InventoryEventProducer()(using system: ActorSystem[?], ec: ExecutionContex
 
   private val producerSettings = ProducerSettings(system, new StringSerializer, new StringSerializer)
     .withBootstrapServers(system.settings.config.getString("kafka.bootstrap-servers"))
-  private val producer = SendProducer(producerSettings)
+  private val producer: SendProducer[String, String] = SendProducer(producerSettings)
 
   // All items reserved successfully → order service can confirm
   def publishAllReserved(orderId: String, items: List[ItemLine], traceId: String): Future[Unit] =

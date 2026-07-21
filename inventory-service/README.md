@@ -1,6 +1,6 @@
 # Inventory Service
 
-Manages product stock levels using a **reactive Akka Streams pipeline** to consume Kafka events. Uses optimistic locking to safely handle concurrent reservations from multiple pods, and Redis as a cache-aside layer to reduce database load.
+Manages product stock levels using a **reactive Pekko Streams pipeline** to consume Kafka events. Uses optimistic locking to safely handle concurrent reservations from multiple pods, and Redis as a cache-aside layer to reduce database load.
 
 ---
 
@@ -40,7 +40,7 @@ reserveWithOptimisticLock (retry 3×)
 commitOffset (Kafka offset committed only after success)
 ```
 
-Backpressure is handled automatically by Akka Streams — consumers never overwhelm the database.
+Backpressure is handled automatically by Pekko Streams — consumers never overwhelm the database.
 
 ---
 
@@ -49,9 +49,9 @@ Backpressure is handled automatically by Akka Streams — consumers never overwh
 | Component | Technology |
 |-----------|-----------|
 | Language | Scala 3.4.2 |
-| Stream processing | Akka Streams 2.9.3 |
-| Kafka consumer | Alpakka Kafka 5.0.0 |
-| HTTP server | Akka HTTP 10.6.3 |
+| Stream processing | Pekko Streams 1.1.3 |
+| Kafka consumer | Pekko Connectors Kafka 1.1.0 |
+| HTTP server | Pekko HTTP 1.1.0 |
 | Database | Slick 3.5.1 + HikariCP |
 | Cache | Redis 7 via Lettuce (async) |
 | DB migrations | Flyway 10.15.0 |
