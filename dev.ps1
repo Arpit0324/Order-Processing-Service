@@ -36,6 +36,29 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+# ── Java 21+ auto-selection ───────────────────────────────────────────────────
+# Maven enforcer requires Java 21+. If the current JAVA_HOME is older, find and
+# use the newest JDK >= 21 from the well-known IntelliJ/IDE JDK cache directory.
+$jdksRoot = "$env:USERPROFILE\.jdks"
+# java -version writes to stderr; suppress Stop behaviour for this call only
+$javaVersionOutput = $null
+try { $javaVersionOutput = (java -version 2>&1 | Out-String) } catch {}
+$currentVersion = 0
+if ($javaVersionOutput -match 'version "(\d+)') { $currentVersion = [int]$Matches[1] }
+if ($currentVersion -lt 21) {
+    $java21Plus = Get-ChildItem $jdksRoot -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '^(openjdk|temurin|ms)-?(2[1-9]|[3-9]\d)' } |
+        Sort-Object Name -Descending | Select-Object -First 1
+    if ($java21Plus) {
+        $env:JAVA_HOME = $java21Plus.FullName
+        $env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
+        Write-Host "  [java] switched to $($java21Plus.Name) for Maven (Java 21+ required)" -ForegroundColor Yellow
+    } else {
+        Write-Host "ERROR: Java 21+ not found. Install it or set JAVA_HOME manually." -ForegroundColor Red
+        exit 1
+    }
+}
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 function Write-Header([string]$msg) {

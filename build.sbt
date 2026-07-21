@@ -63,6 +63,7 @@ lazy val orderService = (project in file("order-service"))
       "org.apache.pekko"   %% "pekko-http-spray-json"      % pekkoHttpVersion,
       "org.apache.pekko"   %% "pekko-stream"               % pekkoVersion,
       "org.apache.pekko"   %% "pekko-connectors-kafka"     % pekkoKafkaVersion,
+      "org.apache.pekko"   %% "pekko-serialization-jackson" % pekkoVersion,
       // Persistence
       "org.apache.pekko"   %% "pekko-persistence-jdbc"     % pekkoPersistenceJdbc,
       "com.typesafe.slick" %% "slick"                     % slickVersion,
@@ -91,6 +92,7 @@ lazy val orderService = (project in file("order-service"))
       case PathList("META-INF", "maven", _*)          => MergeStrategy.discard
       case PathList("reference.conf")                 => MergeStrategy.concat
       case PathList("application.conf")               => MergeStrategy.first
+      case "module-info.class"                        => MergeStrategy.discard
       case _                                          => MergeStrategy.first
     }
   )
@@ -134,6 +136,7 @@ lazy val inventoryService = (project in file("inventory-service"))
       case PathList("META-INF", "MANIFEST.MF")       => MergeStrategy.discard
       case PathList("META-INF", "services", _*)       => MergeStrategy.concat
       case PathList("reference.conf")                 => MergeStrategy.concat
+      case "module-info.class"                        => MergeStrategy.discard
       case _                                          => MergeStrategy.first
     }
   )

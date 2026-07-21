@@ -96,8 +96,9 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-    command: >
-      bash -c "
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
         echo 'Creating Kafka topics...' &&
         kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists \
           --topic order.created           --partitions 3 --replication-factor 1 \
@@ -119,7 +120,6 @@ services:
         kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists \
           --topic refund.requested        --partitions 1 --replication-factor 1 &&
         echo 'All 9 topics created successfully.'
-      "
     restart: "no"
 
   kafka-ui:
@@ -148,8 +148,8 @@ services:
 
   api-gateway:
     build:
-      context: ./api-gateway
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-gateway/Dockerfile
     restart: unless-stopped
     depends_on:
       kafka:
@@ -176,8 +176,8 @@ services:
 
   order-service:
     build:
-      context: ./order-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: order-service/Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:
@@ -203,8 +203,8 @@ services:
 
   inventory-service:
     build:
-      context: ./inventory-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: inventory-service/Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:
@@ -232,8 +232,8 @@ services:
 
   notification-service:
     build:
-      context: ./notification-service
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: notification-service/Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:

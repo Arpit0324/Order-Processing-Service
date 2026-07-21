@@ -5,6 +5,7 @@ WORKDIR /build
 
 COPY pom.xml ./
 COPY api-gateway/pom.xml api-gateway/
+COPY notification-service/pom.xml notification-service/
 RUN apk add --no-cache maven && \
     mvn -pl api-gateway dependency:go-offline -q
 

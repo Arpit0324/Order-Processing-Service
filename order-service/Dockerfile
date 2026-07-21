@@ -4,7 +4,8 @@ FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /build
 
 # Copy only build files first to leverage Docker layer cache
-COPY build.sbt project/ ./
+COPY build.sbt ./
+COPY project/ project/
 # Download dependencies before copying source (cached unless build.sbt changes)
 RUN apk add --no-cache bash curl && \
     curl -fsSL https://github.com/sbt/sbt/releases/download/v1.10.1/sbt-1.10.1.tgz \
