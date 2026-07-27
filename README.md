@@ -6,6 +6,11 @@ A production-grade polyglot microservices system for order lifecycle management,
 
 ## Architecture
 
+![Architecture diagram](./architecture.svg)
+
+<details>
+<summary>ASCII fallback</summary>
+
 ```
 Client / Browser
       │
@@ -33,6 +38,8 @@ Client / Browser
    PostgreSQL :5432     Redis :6379
    3 databases          Cache + IdempotencyKeys
 ```
+
+</details>
 
 ---
 
@@ -130,6 +137,10 @@ mvn package -DskipTests
 #### Option A — Full stack with Docker Compose (recommended)
 
 ```bash
+# 0. One-time: create .env from template and set JWT_PUBLIC_KEY (see RUNNING.md)
+copy .env.example .env    # Windows
+cp .env.example .env      # Linux/Mac
+
 # Build images and start all 9 containers
 docker-compose up --build
 ```
@@ -199,7 +210,10 @@ All four should return `200 OK` before sending any API traffic.
 
 ### Environment Variables
 
-All services start with sensible defaults — no `.env` file is required for local dev with Docker Compose.
+> **Before running any option**, complete the one-time JWT key setup:
+> copy `.env.example` → `.env` and fill in `JWT_PUBLIC_KEY`.
+> See [RUNNING.md](./RUNNING.md#one-time-setup--jwt-key-pair) for the exact commands.
+
 When running services standalone (Option B/C), set these as needed:
 
 | Variable | Default | Used by |
@@ -210,7 +224,7 @@ When running services standalone (Option B/C), set these as needed:
 | `DB_PASSWORD` | `changeme` | order, inventory, notification |
 | `KAFKA_BOOTSTRAP` | `localhost:9092` | all services |
 | `REDIS_HOST` | `localhost` | inventory-service |
-| `JWT_SECRET` | `dev-secret` | api-gateway |
+| `JWT_PUBLIC_KEY` | *(required — RS256 public key, no default)* | api-gateway |
 
 ---
 
@@ -364,7 +378,7 @@ kubectl get pods -n ops-system
 kubectl get hpa -n ops-system
 ```
 
-**Important**: Replace placeholder base64 values in [k8s/secrets/secrets.yaml](k8s/secrets/secrets.yaml) before deploying. Use `external-secrets-operator` or Sealed Secrets in production.
+**Important**: Replace placeholder base64 values in [k8s/secrets/secrets.yaml](k8s/secrets/secrets.yaml) before deploying. The `JWT_PUBLIC_KEY` secret must contain the base64-encoded RSA public key (no PEM headers). Use `external-secrets-operator` or Sealed Secrets in production — never commit real secrets.
 
 ---
 
