@@ -13,7 +13,7 @@ x-service-env: &service-env
   KAFKA_BOOTSTRAP: ${KAFKA_BOOTSTRAP:-kafka:9092}
   REDIS_HOST:      ${REDIS_HOST:-redis}
   REDIS_PORT:      ${REDIS_PORT:-6379}
-  JWT_PUBLIC_KEY:  ${JWT_PUBLIC_KEY:-classpath:keys/public.pem}
+  JWT_PUBLIC_KEY:  ${JWT_PUBLIC_KEY:?JWT_PUBLIC_KEY not set — copy .env.example to .env and fill in the value}
 
 services:
 

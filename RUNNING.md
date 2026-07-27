@@ -11,6 +11,71 @@
 
 ---
 
+## One-Time Setup — JWT Key Pair
+
+The API Gateway verifies RS256 JWTs using a public key supplied at runtime via the
+`JWT_PUBLIC_KEY` environment variable. **Keys are never committed to the repo.**
+
+### 1. Generate the RSA-2048 key pair
+
+**Windows (PowerShell — no extra tools needed, uses JDK 21's `jshell`)**
+```powershell
+@'
+import java.security.*; import java.util.Base64; import java.nio.file.*;
+KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA"); gen.initialize(2048);
+KeyPair pair = gen.generateKeyPair();
+var enc = Base64.getMimeEncoder(64, new byte[]{'\n'});
+Files.writeString(Path.of("private.pem"), "-----BEGIN PRIVATE KEY-----\n" + enc.encodeToString(pair.getPrivate().getEncoded()) + "\n-----END PRIVATE KEY-----\n");
+Files.writeString(Path.of("public.pem"),  "-----BEGIN PUBLIC KEY-----\n"  + enc.encodeToString(pair.getPublic().getEncoded())  + "\n-----END PUBLIC KEY-----\n");
+System.out.println("JWT_PUBLIC_KEY=" + Base64.getEncoder().encodeToString(pair.getPublic().getEncoded()));
+/exit
+'@ | jshell --execution local -
+```
+
+**Linux / Mac (requires `openssl`)**
+```bash
+openssl genrsa -out private.pem 2048
+openssl rsa -in private.pem -pubout -out public.pem
+```
+
+> Keep `private.pem` safe — it signs tokens. Both files are gitignored (`*.pem`).
+
+### 2. Extract the public key value for `JWT_PUBLIC_KEY`
+
+The env var expects the PEM body — the base64 content **without** the `-----BEGIN/END-----`
+header lines and **without** newlines.
+
+> **Windows shortcut**: the `jshell` command above already prints `JWT_PUBLIC_KEY=<value>` — copy that line's value directly into `.env`.
+
+**Linux / Mac**
+```bash
+grep -v '^-----' public.pem | tr -d '\n'
+```
+
+**Windows (PowerShell — from existing `public.pem`)**
+```powershell
+(Get-Content public.pem | Where-Object { $_ -notmatch '^-----' }) -join ''
+```
+
+Copy the output — it will look like `MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...`
+
+### 3. Create your `.env` file
+
+```bash
+cp .env.example .env          # Linux/Mac
+Copy-Item .env.example .env   # Windows PowerShell
+```
+
+Open `.env` and replace `<paste-base64-public-key-here>` with the value from step 2:
+
+```
+JWT_PUBLIC_KEY=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
+```
+
+> `.env` is gitignored. **Never commit it.**
+
+---
+
 ## Option A — Full Docker Stack (Recommended)
 
 Everything runs inside Docker. Simplest way to get the whole system up.
@@ -200,14 +265,12 @@ All services have sensible defaults for local development. Override only when ne
 | `KAFKA_BOOTSTRAP` | `kafka:9092` (Docker) / `localhost:9092` (local) | all services |
 | `REDIS_HOST` | `redis` (Docker) / `localhost` (local) | api-gateway, inventory |
 | `REDIS_PORT` | `6379` | api-gateway, inventory |
-| `JWT_PUBLIC_KEY` | `classpath:keys/public.pem` (dev key bundled) | api-gateway |
+| `JWT_PUBLIC_KEY` | *(required — see JWT Key Setup above)* | api-gateway |
 | `HTTP_PORT` | `8081` / `8082` | order-service, inventory-service |
 | `SERVER_PORT` | `8083` / `8080` | notification-service, api-gateway |
 
-> **JWT keys for local dev** — a 2048-bit RSA key pair is bundled at
-> `api-gateway/src/main/resources/keys/`. The public key is committed; the private key
-> (`keys/private.pem`) is gitignored. For production, set `JWT_PUBLIC_KEY` to a
-> base64-encoded DER public key (see `api-gateway/README.md`).
+> **`JWT_PUBLIC_KEY` is required** — generate your key pair and set this variable
+> following the "JWT Key Setup" section above before starting any option.
 
 ---
 

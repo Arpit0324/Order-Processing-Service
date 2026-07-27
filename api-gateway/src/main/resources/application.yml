@@ -114,11 +114,10 @@ resilience4j:
 # ── JWT config ────────────────────────────────────────────────────────────────
 gateway:
   jwt:
-    # RS256 public key (base64-encoded DER, no PEM headers needed)
-    # Generate: openssl genrsa -out private.pem 2048
-    #           openssl rsa -in private.pem -pubout -out public.pem
-    # Set via env var in docker-compose / K8s Secret
-    public-key: ${JWT_PUBLIC_KEY:MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAplaceholder}
+    # RS256 public key — strip the PEM header/footer lines and join into one line.
+    # See RUNNING.md "JWT Key Setup" for generation steps.
+    # Set via JWT_PUBLIC_KEY env var (in .env for local, K8s Secret for production).
+    public-key: ${JWT_PUBLIC_KEY}
 
 # ── Server ────────────────────────────────────────────────────────────────────
 server:
