@@ -3,7 +3,6 @@ spring:
     name: notification-service
 
   datasource:
-    url:      jdbc:postgresql://localhost:5432/ops_notifications
     url:      ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ops_notifications}
     username: ${SPRING_DATASOURCE_USERNAME:ops}
     password: ${SPRING_DATASOURCE_PASSWORD:changeme}

@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 860" width="800" height="860"
+     font-family="Segoe UI, Arial, sans-serif">
+
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0,10 3.5,0 7" fill="#7a8a9a"/>
+    </marker>
+  </defs>
+
+  <!-- Page background -->
+  <rect width="800" height="860" fill="#EEF3FB"/>
+
+  <!-- Kubernetes cluster border (dashed) -->
+  <rect x="18" y="18" width="764" height="824" rx="14"
+        fill="none" stroke="#5B9BD5" stroke-width="1.6" stroke-dasharray="9,5"/>
+
+  <!-- Cluster label -->
+  <text x="36" y="46" fill="#333" font-size="13" font-weight="600">Kubernetes cluster</text>
+
+  <!-- Branch badge -->
+  <rect x="530" y="28" width="234" height="26" rx="6" fill="#D6E8F5" stroke="#9BC0E8" stroke-width="1"/>
+  <text x="647" y="46" text-anchor="middle" fill="#1a4f8b" font-size="11.5" font-weight="600">project-setup-flow</text>
+
+  <!-- ── Client / Browser ─────────────────────────────── -->
+  <rect x="308" y="62" width="184" height="52" rx="10"
+        fill="#E8E2D8" stroke="#C8BEA8" stroke-width="1.2"/>
+  <text x="400" y="84" text-anchor="middle" fill="#333" font-size="14" font-weight="600">Client / Browser</text>
+  <text x="400" y="103" text-anchor="middle" fill="#666" font-size="10.5">HTTPS / REST</text>
+
+  <!-- arrow: Client → Gateway -->
+  <line x1="400" y1="114" x2="382" y2="152"
+        stroke="#7a8a9a" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── API Gateway ──────────────────────────────────── -->
+  <rect x="98" y="154" width="488" height="90" rx="10"
+        fill="#C8DFF5" stroke="#8BBCE8" stroke-width="1.2"/>
+  <text x="342" y="180" text-anchor="middle" fill="#1a3f6b" font-size="16" font-weight="700">API Gateway  :8080</text>
+  <text x="342" y="200" text-anchor="middle" fill="#2a5080" font-size="12">Spring Cloud Gateway + Swagger / OpenAPI</text>
+  <text x="342" y="218" text-anchor="middle" fill="#2a5080" font-size="11">JWT Auth (RS256) · Rate Limit · Circuit Breaker</text>
+
+  <!-- Swagger UI docs badge -->
+  <rect x="604" y="168" width="134" height="38" rx="8"
+        fill="#C8EDD8" stroke="#88C8A0" stroke-width="1.2"/>
+  <text x="671" y="183" text-anchor="middle" fill="#1a5f3b" font-size="11" font-weight="600">Swagger UI docs</text>
+  <text x="671" y="198" text-anchor="middle" fill="#2a7050" font-size="10">localhost:8080</text>
+  <!-- connector line: Gateway right edge → badge left edge -->
+  <line x1="586" y1="187" x2="604" y2="187"
+        stroke="#88C8A0" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- arrows: Gateway → Services (fan out) -->
+  <line x1="218" y1="244" x2="186" y2="280"
+        stroke="#7a8a9a" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="342" y1="244" x2="342" y2="280"
+        stroke="#7a8a9a" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="466" y1="244" x2="552" y2="280"
+        stroke="#7a8a9a" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── Order Service ────────────────────────────────── -->
+  <rect x="62" y="282" width="212" height="84" rx="10"
+        fill="#E2DBF5" stroke="#B0A0E0" stroke-width="1.2"/>
+  <text x="168" y="310" text-anchor="middle" fill="#3b2270" font-size="14" font-weight="700">Order Service</text>
+  <text x="168" y="330" text-anchor="middle" fill="#5a408a" font-size="11">Scala 3 + Pekko Typed actors</text>
+  <text x="168" y="348" text-anchor="middle" fill="#7a6090" font-size="10">:8081  (Pekko Persistence)</text>
+
+  <!-- ── Inventory Service ─────────────────────────────── -->
+  <rect x="236" y="282" width="212" height="84" rx="10"
+        fill="#C8EDD8" stroke="#88C8A0" stroke-width="1.2"/>
+  <text x="342" y="310" text-anchor="middle" fill="#1a5f3b" font-size="14" font-weight="700">Inventory Service</text>
+  <text x="342" y="330" text-anchor="middle" fill="#2a7050" font-size="11">Scala 3 + Pekko Streams</text>
+  <text x="342" y="348" text-anchor="middle" fill="#3a8060" font-size="10">:8082  (Redis cache)</text>
+
+  <!-- ── Notification Service ──────────────────────────── -->
+  <rect x="510" y="282" width="212" height="84" rx="10"
+        fill="#F5EDD6" stroke="#E0C880" stroke-width="1.2"/>
+  <text x="616" y="310" text-anchor="middle" fill="#5f3b1a" font-size="14" font-weight="700">Notification Service</text>
+  <text x="616" y="330" text-anchor="middle" fill="#7f5030" font-size="11">Java 21 + Spring Boot 3</text>
+  <text x="616" y="348" text-anchor="middle" fill="#9f6040" font-size="10">:8083  (+ Pekko consumer)</text>
+
+  <!-- arrows: Services → Kafka (fan in) -->
+  <line x1="168" y1="366" x2="240" y2="404"
+        stroke="#7a8a9a" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="342" y1="366" x2="342" y2="404"
+        stroke="#7a8a9a" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="616" y1="366" x2="544" y2="404"
+        stroke="#7a8a9a" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── Kafka event bus ───────────────────────────────── -->
+  <rect x="62" y="406" width="676" height="94" rx="10"
+        fill="#F5DDD6" stroke="#E0A898" stroke-width="1.2"/>
+  <text x="400" y="432" text-anchor="middle" fill="#6b2020" font-size="15" font-weight="700">Kafka event bus  ·  9 topics  ·  KRaft mode (no ZooKeeper)</text>
+  <text x="400" y="453" text-anchor="middle" fill="#8b3030" font-size="11">order.created · order.cancelled · order.cancel.requested · inventory.updated · notif.sent</text>
+  <text x="400" y="471" text-anchor="middle" fill="#8b3030" font-size="11">order.return.requested · order.returned · refund.requested · order.created.DLT</text>
+
+  <!-- arrows: Kafka → stores -->
+  <line x1="260" y1="500" x2="220" y2="540"
+        stroke="#7a8a9a" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="540" y1="500" x2="580" y2="540"
+        stroke="#7a8a9a" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- ── PostgreSQL ────────────────────────────────────── -->
+  <rect x="62" y="542" width="286" height="66" rx="10"
+        fill="#C8DFF5" stroke="#8BBCE8" stroke-width="1.2"/>
+  <text x="205" y="568" text-anchor="middle" fill="#1a3f6b" font-size="15" font-weight="700">PostgreSQL  :5432</text>
+  <text x="205" y="588" text-anchor="middle" fill="#2a5080" font-size="10">ops_orders · ops_inventory · ops_notifications</text>
+
+  <!-- ── Redis cache ───────────────────────────────────── -->
+  <rect x="452" y="542" width="286" height="66" rx="10"
+        fill="#C8EAC0" stroke="#88C888" stroke-width="1.2"/>
+  <text x="595" y="568" text-anchor="middle" fill="#1a4f1a" font-size="15" font-weight="700">Redis  :6379</text>
+  <text x="595" y="588" text-anchor="middle" fill="#2a6f2a" font-size="10">stock cache · rate-limit counters · idempotency keys</text>
+
+  <!-- ── Kubernetes resource chips ─────────────────────── -->
+  <text x="400" y="634" text-anchor="middle" fill="#5B9BD5" font-size="10.5" font-style="italic">Kubernetes manifests (k8s/)</text>
+
+  <!-- chip: Deployments -->
+  <rect x="54"  y="644" width="112" height="32" rx="7" fill="#D2E6F8" stroke="#9BC0E8" stroke-width="1"/>
+  <text x="110" y="665" text-anchor="middle" fill="#1a3f6b" font-size="12">Deployments</text>
+
+  <!-- chip: Services -->
+  <rect x="176" y="644" width="94"  height="32" rx="7" fill="#D2E6F8" stroke="#9BC0E8" stroke-width="1"/>
+  <text x="223" y="665" text-anchor="middle" fill="#1a3f6b" font-size="12">Services</text>
+
+  <!-- chip: ConfigMaps -->
+  <rect x="280" y="644" width="104" height="32" rx="7" fill="#D2E6F8" stroke="#9BC0E8" stroke-width="1"/>
+  <text x="332" y="665" text-anchor="middle" fill="#1a3f6b" font-size="12">ConfigMaps</text>
+
+  <!-- chip: Ingress -->
+  <rect x="394" y="644" width="84"  height="32" rx="7" fill="#D2E6F8" stroke="#9BC0E8" stroke-width="1"/>
+  <text x="436" y="665" text-anchor="middle" fill="#1a3f6b" font-size="12">Ingress</text>
+
+  <!-- chip: HPA / pods -->
+  <rect x="488" y="644" width="100" height="32" rx="7" fill="#D2E6F8" stroke="#9BC0E8" stroke-width="1"/>
+  <text x="538" y="665" text-anchor="middle" fill="#1a3f6b" font-size="12">HPA / pods</text>
+
+  <!-- chip: Secrets -->
+  <rect x="598" y="644" width="150" height="32" rx="7" fill="#F5E0D6" stroke="#E0A898" stroke-width="1"/>
+  <text x="673" y="665" text-anchor="middle" fill="#6b2020" font-size="12">Secrets (JWT · DB · TLS)</text>
+
+</svg>

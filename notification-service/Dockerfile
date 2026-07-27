@@ -6,6 +6,7 @@ WORKDIR /build
 # Cache Maven dependencies separately from source
 COPY pom.xml ./
 COPY notification-service/pom.xml notification-service/
+COPY api-gateway/pom.xml api-gateway/
 RUN apk add --no-cache maven && \
     mvn -pl notification-service dependency:go-offline -q
 

@@ -28,6 +28,7 @@ project/.sbt-maven-versioning-plugin.sbt
 *.sbt.bak
 
 # ── Scala Metals (LSP server) ────────────────────────────────────────────────
+.idea/modules
 .metals/
 .metals.json
 metals.sbt
@@ -85,16 +86,4 @@ jacoco.exec
 .java-version
 tmp/
 temp/
-.bloop/
-.bsp/
-.metals/
 
-target/
-project/target/
-project/project/
-
-.vscode/
-
-.idea/
-
-*.class

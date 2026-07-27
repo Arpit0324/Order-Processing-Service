@@ -3,7 +3,8 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /build
 
-COPY build.sbt project/ ./
+COPY build.sbt ./
+COPY project/ project/
 RUN apk add --no-cache bash curl && \
     curl -fsSL https://github.com/sbt/sbt/releases/download/v1.10.1/sbt-1.10.1.tgz \
     | tar xz -C /usr/local && \

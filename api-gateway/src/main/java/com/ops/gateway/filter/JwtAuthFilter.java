@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.io.InputStream;
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
@@ -101,10 +102,22 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
         return response.writeWith(Mono.just(buffer));
     }
 
-    private static PublicKey loadPublicKey(String base64Key) {
+    private static PublicKey loadPublicKey(String keyValue) {
         try {
+            String pem;
+            if (keyValue.startsWith("classpath:")) {
+                String resourcePath = keyValue.substring("classpath:".length());
+                try (InputStream is = JwtAuthFilter.class.getClassLoader().getResourceAsStream(resourcePath)) {
+                    if (is == null) {
+                        throw new IllegalStateException("Classpath resource not found: " + resourcePath);
+                    }
+                    pem = new String(is.readAllBytes());
+                }
+            } else {
+                pem = keyValue;
+            }
             // Strip PEM headers if present
-            String stripped = base64Key
+            String stripped = pem
                     .replace("-----BEGIN PUBLIC KEY-----", "")
                     .replace("-----END PUBLIC KEY-----", "")
                     .replaceAll("\\s", "");
