@@ -3,7 +3,6 @@ package com.ops.gateway.fallback;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import reactor.test.StepVerifier;
@@ -28,9 +27,10 @@ class FallbackControllerTest {
                 .assertNext(response -> {
                     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
                     assertThat(response.getBody()).isNotNull();
-                    assertThat(response.getBody().code()).isEqualTo("SERVICE_UNAVAILABLE");
+                    assertThat(response.getBody().error()).isEqualTo("SERVICE_UNAVAILABLE");
                     assertThat(response.getBody().message()).contains("order-service");
                     assertThat(response.getBody().timestamp()).isNotNull();
+                    assertThat(response.getBody().status()).isEqualTo(503);
                 })
                 .verifyComplete();
     }
@@ -44,7 +44,7 @@ class FallbackControllerTest {
                 .assertNext(response -> {
                     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
                     assertThat(response.getBody()).isNotNull();
-                    assertThat(response.getBody().code()).isEqualTo("SERVICE_UNAVAILABLE");
+                    assertThat(response.getBody().error()).isEqualTo("SERVICE_UNAVAILABLE");
                     assertThat(response.getBody().message()).contains("inventory-service");
                 })
                 .verifyComplete();
@@ -59,7 +59,7 @@ class FallbackControllerTest {
                 .assertNext(response -> {
                     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
                     assertThat(response.getBody()).isNotNull();
-                    assertThat(response.getBody().code()).isEqualTo("SERVICE_UNAVAILABLE");
+                    assertThat(response.getBody().error()).isEqualTo("SERVICE_UNAVAILABLE");
                     assertThat(response.getBody().message()).contains("notification-service");
                 })
                 .verifyComplete();
@@ -89,8 +89,8 @@ class FallbackControllerTest {
         StepVerifier.create(controller.orderFallback(exchange))
                 .assertNext(response -> {
                     assertThat(response.getBody()).isNotNull();
-                    // traceId will be null when no header is set
-                    assertThat(response.getBody().code()).isEqualTo("SERVICE_UNAVAILABLE");
+                    assertThat(response.getBody().traceId()).isNull();
+                    assertThat(response.getBody().error()).isEqualTo("SERVICE_UNAVAILABLE");
                 })
                 .verifyComplete();
     }
