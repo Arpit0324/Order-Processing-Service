@@ -11,6 +11,7 @@ The single entry point for all client requests. Built with **Java 21 + Spring Cl
 - **Routing** — proxy requests to order-service, inventory-service, notification-service
 - **Circuit Breaker** — Resilience4j per downstream; open after 50% failure rate
 - **Retry** — automatic GET retries on `502 / 503`
+- **Global Error Handling** — consistent JSON error envelope for all gateway-originated and raw upstream errors
 - **Swagger UI** — aggregates OpenAPI specs from all services
 
 ---
@@ -21,6 +22,12 @@ Every request passes through these global filters in order:
 
 ```
 Request
+  │
+  ▼ ErrorResponseFilter (order -2)
+  │  • Decorates the response object
+  │  • Intercepts raw (non-JSON) 5xx from downstream
+  │  • Rewrites HTML/plain-text errors into standard JSON envelope
+  │  • Passes well-formed JSON responses through untouched
   │
   ▼ JwtAuthFilter (order -200)
   │  • Validate RS256 Bearer token
@@ -43,6 +50,11 @@ Request
   │  • Fallback: /fallback/{service} → 503 JSON
   │
   ▼ Downstream Service
+
+GlobalErrorWebExceptionHandler (@Order -1)
+  • Catches ALL unhandled exceptions from the filter chain
+  • ConnectException → 502  |  TimeoutException → 504  |  Generic → 500
+  • Returns the same standard JSON error envelope
 ```
 
 ---
@@ -124,6 +136,42 @@ Timeout per call: 5s
 ```
 
 Notification service uses relaxed settings: 60% failure threshold, 60s wait.
+
+---
+
+## Error Handling
+
+All gateway-originated errors return a consistent JSON envelope:
+
+```json
+{
+  "error": "BAD_GATEWAY",
+  "message": "Downstream service returned an invalid response",
+  "traceId": "a1b2c3d4e5f6",
+  "timestamp": "2026-07-28T10:00:00Z",
+  "status": 502
+}
+```
+
+### Error Code Reference
+
+| Code | HTTP Status | Trigger |
+|------|-------------|---------|
+| `UNAUTHORIZED` | 401 | Missing/invalid/expired JWT |
+| `RATE_LIMIT_EXCEEDED` | 429 | > 100 requests/min from same IP |
+| `BAD_REQUEST` | 400 | Malformed request or missing required headers |
+| `PAYLOAD_TOO_LARGE` | 413 | Request body exceeds max size |
+| `SERVICE_UNAVAILABLE` | 503 | Circuit breaker open / downstream unavailable |
+| `BAD_GATEWAY` | 502 | Downstream unreachable (ConnectException) |
+| `GATEWAY_TIMEOUT` | 504 | Downstream did not respond in time |
+| `INTERNAL_ERROR` | 500 | Unhandled gateway exception |
+
+### Behaviour
+
+- **Unhandled exceptions** in the filter chain → `GlobalErrorWebExceptionHandler` maps to the appropriate error code
+- **Raw 5xx from downstream** (HTML, plain text, empty body) → `ErrorResponseFilter` rewrites into the JSON envelope
+- **Well-formed JSON 5xx from downstream** → passed through to the client untouched
+- **Circuit breaker fallbacks** → `FallbackController` returns `SERVICE_UNAVAILABLE` with service name
 
 ---
 
