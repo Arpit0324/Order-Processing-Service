@@ -8,38 +8,19 @@ A production-grade polyglot microservices system for order lifecycle management,
 
 ![Architecture diagram](./architecture.svg)
 
-<details>
-<summary>ASCII fallback</summary>
-
+```mermaid
+graph TD
+    Client[Client / Browser]
+    Client --> GW["API Gateway :8080<br/>Spring Cloud Gateway + Swagger UI<br/>JWT Auth · Rate Limit · Circuit Breaker"]
+    GW --> OS["Order Service :8081<br/>Scala + Pekko Actors"]
+    GW --> IS["Inventory Service :8082<br/>Scala + Pekko Streams"]
+    GW --> NS["Notification Service :8083<br/>Java + Spring + Pekko"]
+    OS --> Kafka["Kafka :9092<br/>9 topics"]
+    IS --> Kafka
+    NS --> Kafka
+    Kafka --> PG["PostgreSQL :5432<br/>3 databases"]
+    Kafka --> Redis["Redis :6379<br/>Cache + IdempotencyKeys"]
 ```
-Client / Browser
-      │
-      ▼
-┌──────────────────────────────────────────┐
-│   API Gateway  :8080                     │
-│   Spring Cloud Gateway + Swagger UI      │
-│   JWT Auth · Rate Limit · Circuit Breaker│
-└──────┬──────────┬──────────┬─────────────┘
-       │          │          │
-       ▼          ▼          ▼
- Order Svc   Inventory   Notification
- :8081       Svc :8082   Svc :8083
- Scala +     Scala +     Java +
- Pekko Actors Pekko Streams Spring + Pekko
-       │          │          │
-       └──────────┼──────────┘
-                  ▼
-        ┌──────────────────┐
-        │   Kafka :9092    │  9 topics
-        └──────────────────┘
-                  │
-        ┌─────────┴────────┐
-        ▼                  ▼
-   PostgreSQL :5432     Redis :6379
-   3 databases          Cache + IdempotencyKeys
-```
-
-</details>
 
 ---
 
@@ -278,16 +259,18 @@ GET    /api/notifications/{id}           Get notification by ID
 
 ## Order Lifecycle
 
-```
-PENDING ──── ConfirmOrder ──── CONFIRMED ──── FulfillOrder ──── FULFILLED
-   │                │                                               │
-   │ CancelOrder    │ CancelOrder (saga)                     RequestReturn
-   ▼                ▼                                               ▼
-CANCELLED       CANCELLED                                  RETURN_REQUESTED
-                                                             │          │
-                                                       Approve      Reject
-                                                             ▼          ▼
-                                                         RETURNED   FULFILLED
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING
+    PENDING --> CONFIRMED: ConfirmOrder
+    PENDING --> CANCELLED: CancelOrder / SLA timeout
+    CONFIRMED --> CANCELLED: CancelOrder (saga)
+    CONFIRMED --> FULFILLED: FulfillOrder
+    FULFILLED --> RETURN_REQUESTED: RequestReturn
+    RETURN_REQUESTED --> RETURNED: Approve
+    RETURN_REQUESTED --> FULFILLED: Reject
+    CANCELLED --> [*]
+    RETURNED --> [*]
 ```
 
 Stale `PENDING` orders auto-cancel after **15 minutes** via Pekko timer.
@@ -296,17 +279,30 @@ Stale `PENDING` orders auto-cancel after **15 minutes** via Pekko timer.
 
 ## Event Flow
 
-```
-POST /api/orders
-  → Kafka: order.created
-    → Inventory Service: reserve stock
-      → Kafka: inventory.updated (RESERVED)
-      → Order Service: confirm order
-      OR
-      → Kafka: order.cancel.requested  (insufficient stock — saga)
-        → Order Service: cancel order
-    → Notification Service: send confirmation
-      → Kafka: notif.sent
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant GW as API Gateway
+    participant OS as Order Service
+    participant K as Kafka
+    participant IS as Inventory Service
+    participant NS as Notification Service
+
+    C->>GW: POST /api/orders
+    GW->>OS: Forward request
+    OS->>K: order.created
+    K->>IS: order.created
+    K->>NS: order.created
+    alt Stock available
+        IS->>K: inventory.updated (RESERVED)
+        K->>OS: inventory.updated
+        OS->>OS: Confirm order
+    else Insufficient stock
+        IS->>K: order.cancel.requested
+        K->>OS: order.cancel.requested
+        OS->>OS: Cancel order (saga)
+    end
+    NS->>K: notif.sent
 ```
 
 ---

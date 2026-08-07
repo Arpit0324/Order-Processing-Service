@@ -18,24 +18,15 @@ Sends multi-channel notifications (email, SMS) in response to Kafka events from 
 
 ## Architecture
 
-```
-Kafka Topics
-    │
-    ▼
-NotificationConsumer (@KafkaListener)
-    │  @RetryableTopic: 3 retries, exponential backoff
-    │  Failed after 3 → order.created.DLT
-    ▼
-NotificationServiceImpl (@Service, @Transactional)
-    │
-    ├─► NotificationRepository (persist record to DB)
-    │
-    ├─► NotificationRouter (Pekko Typed actor)
-    │       │
-    │       ├─► EmailNotificationActor (pool × 4)
-    │       └─► SmsNotificationActor   (pool × 2)
-    │
-    └─► NotificationEventProducer → Kafka: notif.sent
+```mermaid
+flowchart TD
+    A[Kafka Topics] --> B["NotificationConsumer (@KafkaListener)<br/>@RetryableTopic: 3 retries, exponential backoff<br/>Failed after 3 → order.created.DLT"]
+    B --> C["NotificationServiceImpl (@Service, @Transactional)"]
+    C --> D["NotificationRepository<br/>(persist record to DB)"]
+    C --> E["NotificationRouter (Pekko Typed actor)"]
+    E --> F["EmailNotificationActor (pool × 4)"]
+    E --> G["SmsNotificationActor (pool × 2)"]
+    C --> H["NotificationEventProducer → Kafka: notif.sent"]
 ```
 
 ---

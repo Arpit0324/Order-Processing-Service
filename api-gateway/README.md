@@ -20,41 +20,16 @@ The single entry point for all client requests. Built with **Java 21 + Spring Cl
 
 Every request passes through these global filters in order:
 
-```
-Request
-  │
-  ▼ ErrorResponseFilter (order -2)
-  │  • Decorates the response object
-  │  • Intercepts raw (non-JSON) 5xx from downstream
-  │  • Rewrites HTML/plain-text errors into standard JSON envelope
-  │  • Passes well-formed JSON responses through untouched
-  │
-  ▼ JwtAuthFilter (order -200)
-  │  • Validate RS256 Bearer token
-  │  • Reject 401 if missing/invalid/expired
-  │  • Inject X-User-Id header for downstream services
-  │  • Bypass: /swagger-ui, /v3/api-docs, /actuator/health
-  │
-  ▼ RequestLoggingFilter (order -100)
-  │  • Generate X-Trace-Id (UUID) if not present
-  │  • Inject X-Trace-Id into downstream request
-  │  • Log: method, path, userId, response time, status
-  │
-  ▼ RateLimitFilter (order -50)
-  │  • Redis INCR ops:ratelimit:{clientIp} TTL 60s
-  │  • 429 Too Many Requests if > 100/min
-  │  • Fails open if Redis is down
-  │
-  ▼ Spring Cloud Gateway Route Matching
-  │  • CircuitBreaker + Retry filters per route
-  │  • Fallback: /fallback/{service} → 503 JSON
-  │
-  ▼ Downstream Service
+```mermaid
+flowchart TD
+    A[Request] --> B["ErrorResponseFilter (order -2)<br/>• Decorates the response object<br/>• Intercepts raw non-JSON 5xx from downstream<br/>• Rewrites HTML/plain-text errors into JSON envelope<br/>• Passes well-formed JSON responses through"]
+    B --> C["JwtAuthFilter (order -200)<br/>• Validate RS256 Bearer token<br/>• Reject 401 if missing/invalid/expired<br/>• Inject X-User-Id header for downstream<br/>• Bypass: /swagger-ui, /v3/api-docs, /actuator/health"]
+    C --> D["RequestLoggingFilter (order -100)<br/>• Generate X-Trace-Id UUID if not present<br/>• Inject X-Trace-Id into downstream request<br/>• Log: method, path, userId, response time, status"]
+    D --> E["RateLimitFilter (order -50)<br/>• Redis INCR ops:ratelimit:clientIp TTL 60s<br/>• 429 Too Many Requests if > 100/min<br/>• Fails open if Redis is down"]
+    E --> F["Spring Cloud Gateway Route Matching<br/>• CircuitBreaker + Retry filters per route<br/>• Fallback: /fallback/service → 503 JSON"]
+    F --> G[Downstream Service]
 
-GlobalErrorWebExceptionHandler (@Order -1)
-  • Catches ALL unhandled exceptions from the filter chain
-  • ConnectException → 502  |  TimeoutException → 504  |  Generic → 500
-  • Returns the same standard JSON error envelope
+    H["GlobalErrorWebExceptionHandler (@Order -1)<br/>• Catches ALL unhandled exceptions from filter chain<br/>• ConnectException → 502 | TimeoutException → 504 | Generic → 500<br/>• Returns standard JSON error envelope"]
 ```
 
 ---
