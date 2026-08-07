@@ -18,26 +18,18 @@ Manages the full order lifecycle using **Scala 3 + Pekko Typed + Pekko Persisten
 
 ## Order State Machine
 
-```
-             CreateOrder
-                 │
-                 ▼
-           ┌─────────┐   ConfirmOrder   ┌───────────┐
-──────────►│ PENDING │────────────────►│ CONFIRMED │
-           └────┬────┘                  └─────┬─────┘
-                │ CancelOrder (or SLA timeout) │ FulfillOrder
-                ▼                             ▼
-           ┌───────────┐           ┌──────────────┐
-           │ CANCELLED │           │  FULFILLED   │
-           └───────────┘           └──────┬───────┘
-                                          │ RequestReturn
-                                          ▼
-                                   ┌────────────────────┐
-                                   │ RETURN_REQUESTED   │
-                                   └──────┬─────────────┘
-                                    Approve│  │Reject
-                                          ▼  ▼
-                                     RETURNED / FULFILLED
+```mermaid
+stateDiagram-v2
+    [*] --> PENDING: CreateOrder
+    PENDING --> CONFIRMED: ConfirmOrder
+    PENDING --> CANCELLED: CancelOrder / SLA timeout
+    CONFIRMED --> FULFILLED: FulfillOrder
+    CONFIRMED --> CANCELLED: CancelOrder (saga)
+    FULFILLED --> RETURN_REQUESTED: RequestReturn
+    RETURN_REQUESTED --> RETURNED: Approve
+    RETURN_REQUESTED --> FULFILLED: Reject
+    CANCELLED --> [*]
+    RETURNED --> [*]
 ```
 
 Terminal states: `CANCELLED`, `RETURNED`

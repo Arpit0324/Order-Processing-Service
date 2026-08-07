@@ -17,27 +17,16 @@ Manages product stock levels using a **reactive Pekko Streams pipeline** to cons
 
 ## Reactive Pipeline Design
 
-```
-Kafka: order.created
-        │
-        ▼
-CommittableSource (parallelism=4)
-        │
-        ▼
-Deserialize OrderCreatedEvent
-        │
-        ▼
-Per item: fetchFromCache (Redis) → if MISS: fetchFromDB → cacheResult
-        │
-        ▼
-reserveWithOptimisticLock (retry 3×)
-        │
-        ├─ SUCCESS → DEL redis cache → publish inventory.updated (RESERVED)
-        │
-        └─ FAILURE → rollback all items → publish order.cancel.requested
-        │
-        ▼
-commitOffset (Kafka offset committed only after success)
+```mermaid
+flowchart TD
+    A["Kafka: order.created"] --> B["CommittableSource (parallelism=4)"]
+    B --> C["Deserialize OrderCreatedEvent"]
+    C --> D["Per item: fetchFromCache (Redis)<br/>if MISS: fetchFromDB → cacheResult"]
+    D --> E["reserveWithOptimisticLock (retry 3×)"]
+    E -->|SUCCESS| F["DEL redis cache → publish inventory.updated (RESERVED)"]
+    E -->|FAILURE| G["Rollback all items → publish order.cancel.requested"]
+    F --> H["commitOffset (Kafka offset committed only after success)"]
+    G --> H
 ```
 
 Backpressure is handled automatically by Pekko Streams — consumers never overwhelm the database.
