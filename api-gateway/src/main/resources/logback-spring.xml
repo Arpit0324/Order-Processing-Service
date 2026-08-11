@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+  <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <!-- emits: @timestamp, level, logger_name, thread_name, message, stack_trace, MDC -->
+      <customFields>{"service":"api-gateway"}</customFields>
+      <fieldNames>
+        <timestamp>@timestamp</timestamp>
+        <message>message</message>
+        <levelValue>[ignore]</levelValue>
+        <version>[ignore]</version>
+      </fieldNames>
+      <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <maxDepthPerCause>20</maxDepthPerCause>
+        <shortenedClassNameLength>35</shortenedClassNameLength>
+        <rootCauseFirst>true</rootCauseFirst>
+      </throwableConverter>
+    </encoder>
+  </appender>
+
+  <root level="${LOG_LEVEL:-INFO}">
+    <appender-ref ref="JSON_CONSOLE"/>
+  </root>
+
+  <logger name="org.springframework.cloud.gateway" level="WARN"/>
+  <logger name="reactor.netty"                     level="WARN"/>
+  <logger name="io.lettuce"                        level="WARN"/>
+
+</configuration>

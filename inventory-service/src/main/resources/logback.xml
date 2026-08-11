@@ -1,0 +1,33 @@
+<configuration>
+
+  <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      <!-- emits: @timestamp, level, logger_name, thread_name, message, stack_trace, MDC -->
+      <customFields>{"service":"inventory-service"}</customFields>
+      <fieldNames>
+        <timestamp>@timestamp</timestamp>
+        <message>message</message>
+        <levelValue>[ignore]</levelValue>
+        <version>[ignore]</version>
+      </fieldNames>
+      <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <maxDepthPerCause>20</maxDepthPerCause>
+        <shortenedClassNameLength>35</shortenedClassNameLength>
+        <rootCauseFirst>true</rootCauseFirst>
+      </throwableConverter>
+    </encoder>
+  </appender>
+
+  <!-- LOG_LEVEL env var controls root level at runtime; defaults to INFO -->
+  <root level="${LOG_LEVEL:-INFO}">
+    <appender-ref ref="JSON_CONSOLE"/>
+  </root>
+
+  <!-- Reduce noise from framework internals -->
+  <logger name="org.apache.pekko" level="WARN"/>
+  <logger name="org.apache.kafka" level="WARN"/>
+  <logger name="org.flywaydb"     level="INFO"/>
+  <logger name="slick"            level="WARN"/>
+  <logger name="io.lettuce"       level="WARN"/>
+
+</configuration>
