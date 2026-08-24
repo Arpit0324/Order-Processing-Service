@@ -1,6 +1,6 @@
 package com.ops.inventory.service
 
-import com.ops.inventory.api.dto.{InventoryResponse, ReserveRequest, UpdateStockRequest}
+import com.ops.inventory.api.dto.InventoryResponse
 import com.ops.shared.events.OrderCreatedEvent
 import scala.concurrent.Future
 
@@ -9,6 +9,9 @@ trait InventoryService {
   def listItems(page: Int, pageSize: Int):                 Future[(List[InventoryResponse], Int)]
   def reserveForOrder(event: OrderCreatedEvent,
                       traceId: String):                    Future[ReservationOutcome]
+  // Fix C: single-item reserve for the HTTP endpoint
+  def reserveItem(productId: String, orderId: String,
+                  qty: Int, traceId: String):              Future[Either[String, InventoryResponse]]
   def releaseForOrder(orderId: String,
                       traceId: String):                    Future[Unit]
   def commitForOrder(orderId: String):                     Future[Unit]
@@ -18,7 +21,6 @@ trait InventoryService {
                   traceId: String):                        Future[Option[InventoryResponse]]
 }
 
-// Outcome of processing a single order.created event
 sealed trait ReservationOutcome
 final case class AllReserved(orderId: String)             extends ReservationOutcome
 final case class PartiallyFailed(orderId: String,

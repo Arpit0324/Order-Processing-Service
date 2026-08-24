@@ -43,6 +43,7 @@
     <spring-cloud.version>2023.0.2</spring-cloud.version>
     <jjwt.version>0.12.6</jjwt.version>
     <testcontainers.version>1.20.1</testcontainers.version>
+    <logstash-encoder.version>8.0</logstash-encoder.version>
   </properties>
 
   <!-- ── BOM imports ───────────────────────────────────────────────────── -->
@@ -87,6 +88,12 @@
 
   <!-- ── Shared test dependencies available to all child modules ───────── -->
   <dependencies>
+    <!-- Structured JSON logging via SLF4J + Logback -->
+    <dependency>
+      <groupId>net.logstash.logback</groupId>
+      <artifactId>logstash-logback-encoder</artifactId>
+      <version>${logstash-encoder.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>

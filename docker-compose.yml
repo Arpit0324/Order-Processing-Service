@@ -27,6 +27,7 @@ services:
       POSTGRES_PASSWORD:           ${POSTGRES_PASSWORD:-changeme}
       POSTGRES_DB:                 ops_orders          # default DB (required by image)
       POSTGRES_MULTIPLE_DATABASES: ops_orders,ops_inventory,ops_notifications
+      POSTGRES_HOST_AUTH_METHOD:   trust
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -160,6 +161,7 @@ services:
       - "${GATEWAY_PORT:-8080}:8080"
     environment:
       <<: *service-env
+      LOG_LEVEL:                         INFO
       SPRING_PROFILES_ACTIVE:            local
       SERVER_PORT:                       8080
       ORDER_SERVICE_URL:                 http://order-service:8081
@@ -190,6 +192,7 @@ services:
       - "${ORDER_PORT:-8081}:8081"
     environment:
       <<: *service-env
+      LOG_LEVEL:   INFO
       DB_URL:      jdbc:postgresql://${POSTGRES_HOST:-postgres}:5432/ops_orders
       DB_USER:     ${POSTGRES_USER:-ops}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
@@ -219,6 +222,7 @@ services:
       - "${INVENTORY_PORT:-8082}:8082"
     environment:
       <<: *service-env
+      LOG_LEVEL:   INFO
       DB_URL:      jdbc:postgresql://${POSTGRES_HOST:-postgres}:5432/ops_inventory
       DB_USER:     ${POSTGRES_USER:-ops}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
@@ -246,6 +250,7 @@ services:
       - "${NOTIFICATION_PORT:-8083}:8083"
     environment:
       <<: *service-env
+      LOG_LEVEL:                          INFO
       SPRING_PROFILES_ACTIVE:             local
       SERVER_PORT:                        8083
       SPRING_DATASOURCE_URL:              jdbc:postgresql://${POSTGRES_HOST:-postgres}:5432/ops_notifications

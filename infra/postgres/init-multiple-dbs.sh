@@ -1,19 +1,19 @@
-#!/bin/bash
+﻿#!/bin/bash
 # infra/postgres/init-multiple-dbs.sh
 # Creates one PostgreSQL database per service on first container boot.
 set -e
 
 create_db() {
   local db=$1
-  # Check existence first — POSTGRES_DB is already created by the image,
+  # Check existence first â€” POSTGRES_DB is already created by the image,
   # so a plain CREATE DATABASE would fail and halt the script (set -e).
   local exists
   exists=$(psql --username "$POSTGRES_USER" -d postgres -tAc \
     "SELECT 1 FROM pg_database WHERE datname = '$db'")
   if [ "$exists" = "1" ]; then
-    echo "  → Database already exists, skipping: $db"
+    echo "  â†’ Database already exists, skipping: $db"
   else
-    echo "  → Creating database: $db"
+    echo "  â†’ Creating database: $db"
     psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" -d postgres <<-EOSQL
       CREATE DATABASE "$db";
       GRANT ALL PRIVILEGES ON DATABASE "$db" TO "$POSTGRES_USER";

@@ -11,13 +11,11 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
-// ── InventoryController — ENDPOINT LAYER ─────────────────────────────────────
 class InventoryController(service: InventoryService)(using ec: ExecutionContext) {
 
   private val log = LoggerFactory.getLogger(getClass)
 
   val routes: Route = concat(
-    // Health probe
     (get & path("health")) {
       complete(StatusCodes.OK, """{"status":"UP"}""")
     },
@@ -29,11 +27,15 @@ class InventoryController(service: InventoryService)(using ec: ExecutionContext)
         (get & pathEndOrSingleSlash &
           parameters("page".as[Int].withDefault(1), "pageSize".as[Int].withDefault(20))) {
           (page, pageSize) =>
+            // Fix: clamp page/pageSize to prevent negative OFFSET or huge scans
+            val safePage     = math.max(1, page)
+            val safePageSize = math.min(math.max(1, pageSize), 100)
             headerValueByName("X-Trace-Id") { traceId =>
-              onComplete(service.listItems(page, pageSize)) {
+              onComplete(service.listItems(safePage, safePageSize)) {
                 case Success((items, total)) =>
-                  complete(StatusCodes.OK, InventoryListResponse(items, total, page, pageSize))
+                  complete(StatusCodes.OK, InventoryListResponse(items, total, safePage, safePageSize))
                 case Failure(ex) =>
+                  log.error("listItems failed traceId={}", traceId, ex)
                   complete(StatusCodes.InternalServerError, error("INTERNAL_ERROR", ex.getMessage, traceId))
               }
             }
@@ -50,7 +52,7 @@ class InventoryController(service: InventoryService)(using ec: ExecutionContext)
           }
         },
 
-        // PUT /inventory/{productId}/stock  — manual stock adjustment
+        // PUT /inventory/{productId}/stock -- manual stock adjustment
         (put & path(Segment / "stock") & entity(as[UpdateStockRequest])) { (productId, req) =>
           headerValueByName("X-Trace-Id") { traceId =>
             validate(req.delta != 0, "delta must be non-zero") {
@@ -63,19 +65,16 @@ class InventoryController(service: InventoryService)(using ec: ExecutionContext)
           }
         },
 
-        // POST /inventory/reserve  — direct reservation (used by integration tests)
+        // POST /inventory/reserve -- Fix C: actually call reserveForOrder, not getItem
         (post & path("reserve") & entity(as[ReserveRequest])) { req =>
           headerValueByName("X-Trace-Id") { traceId =>
             validate(req.quantity > 0, "quantity must be > 0") {
-              onComplete(service.getItem(req.productId)) {
-                case Success(Some(item)) if item.availableQty >= req.quantity =>
-                  complete(StatusCodes.OK, item)
-                case Success(Some(item)) =>
-                  complete(StatusCodes.UnprocessableEntity,
-                    error("INSUFFICIENT_STOCK",
-                          s"Only ${item.availableQty} units available, requested ${req.quantity}", traceId))
-                case Success(None) =>
+              onComplete(service.reserveItem(req.productId, req.orderId, req.quantity, traceId)) {
+                case Success(Right(resp))   => complete(StatusCodes.OK, resp)
+                case Success(Left("NOT_FOUND")) =>
                   complete(StatusCodes.NotFound, error("NOT_FOUND", s"Product ${req.productId} not found", traceId))
+                case Success(Left(reason)) =>
+                  complete(StatusCodes.UnprocessableEntity, error(reason, reason, traceId))
                 case Failure(ex) =>
                   complete(StatusCodes.InternalServerError, error("INTERNAL_ERROR", ex.getMessage, traceId))
               }

@@ -28,13 +28,15 @@ val circeVersion        = "0.14.9"
 val flywayVersion       = "10.15.0"
 val postgresVersion     = "42.7.3"
 val logbackVersion      = "1.5.6"
+val logstashVersion     = "8.0"
 val scalatestVersion    = "3.2.19"
 val testcontainersVersion = "0.41.4"
 
 // ── Shared dependencies used across all Scala modules ────────────────────────
 val commonDeps = Seq(
-  "ch.qos.logback"  % "logback-classic"          % logbackVersion,
-  "org.scalatest"  %% "scalatest"                % scalatestVersion % Test
+  "ch.qos.logback"       % "logback-classic"          % logbackVersion,
+  "net.logstash.logback" % "logstash-logback-encoder" % logstashVersion,
+  "org.scalatest"       %% "scalatest"                % scalatestVersion % Test
 )
 
 // ── shared: Pure domain — Kafka event schemas, value objects, JSON codecs ────
