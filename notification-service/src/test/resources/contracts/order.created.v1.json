@@ -1,0 +1,23 @@
+{
+  "eventId": "evt-oc-001",
+  "eventType": "ORDER_CREATED",
+  "eventVersion": 1,
+  "occurredAt": "2026-01-01T00:00:00Z",
+  "traceId": "trace-oc-001",
+  "payload": {
+    "orderId": "ord-1001",
+    "customerId": "cust-1",
+    "items": [
+      { "productId": "prod-1", "quantity": 2, "unitPrice": 19.99 }
+    ],
+    "totalAmount": 39.98,
+    "shippingAddress": {
+      "line1": "1 Main St",
+      "city": "Metropolis",
+      "postalCode": "00001",
+      "country": "US"
+    },
+    "customerEmail": "buyer@example.com",
+    "customerPhone": "+15551234567"
+  }
+}

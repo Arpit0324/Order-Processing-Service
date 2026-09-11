@@ -2,7 +2,9 @@ package com.ops.notification.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.ops.notification.domain.DeadLetterNotification;
 import com.ops.notification.dto.NotificationResponse;
+import com.ops.notification.repository.DeadLetterRepository;
 import com.ops.notification.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.support.Acknowledgment;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -27,108 +30,153 @@ class NotificationConsumerTest {
     @Mock
     private NotificationService service;
 
+    @Mock
+    private DeadLetterRepository deadLetterRepository;
+
+    @Mock
+    private Acknowledgment ack;
+
     private ObjectMapper mapper;
     private NotificationConsumer consumer;
 
     private NotificationResponse dummyResponse(String orderId) {
         return new NotificationResponse("id", orderId, "EMAIL", "e@e.com",
-                "ORDER_CONFIRMED", "PENDING", 0, null, null, Instant.now());
+                "ORDER_CONFIRMED", "DELIVERED", 1, null, null, Instant.now());
     }
 
     @BeforeEach
     void setUp() {
         mapper = new ObjectMapper().registerModule(new JavaTimeModule());
-        consumer = new NotificationConsumer(service, mapper);
+        consumer = new NotificationConsumer(service, mapper, deadLetterRepository);
     }
 
     // ─── onOrderCreated ───────────────────────────────────────────────────────
 
     @Test
-    void onOrderCreated_validPayload_shouldCallSendOrderConfirmation() throws Exception {
-        when(service.sendOrderConfirmation(anyString(), anyString(), anyString(), any(), any(), anyString()))
+    void onOrderCreated_validPayload_shouldCallSendOrderConfirmationAndAck() throws Exception {
+        when(service.sendOrderConfirmation(anyString(), anyString(), anyString(), any(), any(), anyString(), anyString()))
                 .thenReturn(dummyResponse("ord-1"));
 
         String payload = buildOrderCreatedPayload("ord-1", "cust-1", "99.99", "trace-abc");
-        consumer.onOrderCreated(payload, "order.created", "trace-abc");
+        consumer.onOrderCreated(payload, "order.created", "trace-abc", ack);
 
         verify(service).sendOrderConfirmation(
                 eq("ord-1"), eq("cust-1"), anyString(), isNull(),
-                eq(new BigDecimal("99.99")), eq("trace-abc"));
+                eq(new BigDecimal("99.99")), eq("trace-abc"), eq("ev-1"));
+        verify(ack).acknowledge();
     }
 
     @Test
     void onOrderCreated_withoutHeaderTraceId_shouldFallbackToEventTraceId() throws Exception {
-        when(service.sendOrderConfirmation(anyString(), anyString(), anyString(), any(), any(), anyString()))
+        when(service.sendOrderConfirmation(anyString(), anyString(), anyString(), any(), any(), anyString(), anyString()))
                 .thenReturn(dummyResponse("ord-2"));
 
         String payload = buildOrderCreatedPayload("ord-2", "cust-2", "10.00", "event-trace");
-        consumer.onOrderCreated(payload, "order.created", null);
+        consumer.onOrderCreated(payload, "order.created", null, ack);
 
         ArgumentCaptor<String> traceCaptor = ArgumentCaptor.forClass(String.class);
         verify(service).sendOrderConfirmation(anyString(), anyString(), anyString(), any(),
-                any(), traceCaptor.capture());
+                any(), traceCaptor.capture(), anyString());
         assertThat(traceCaptor.getValue()).isEqualTo("event-trace");
+        verify(ack).acknowledge();
     }
 
     @Test
-    void onOrderCreated_invalidPayload_shouldThrowRuntimeException() {
-        assertThatThrownBy(() -> consumer.onOrderCreated("{invalid-json}", "order.created", null))
+    void onOrderCreated_invalidPayload_shouldThrowWithoutAck() {
+        assertThatThrownBy(() -> consumer.onOrderCreated("{invalid-json}", "order.created", null, ack))
                 .isInstanceOf(RuntimeException.class);
+        verify(ack, never()).acknowledge();
     }
 
     // ─── onOrderCancelled ─────────────────────────────────────────────────────
 
     @Test
-    void onOrderCancelled_validPayload_shouldCallSendOrderCancellation() throws Exception {
-        when(service.sendOrderCancellation(anyString(), anyString(), anyString(), anyString(), anyString()))
+    void onOrderCancelled_validPayload_shouldCallSendOrderCancellationAndAck() throws Exception {
+        when(service.sendOrderCancellation(anyString(), anyString(), anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(dummyResponse("ord-3"));
 
         String payload = buildOrderCancelledPayload("ord-3", "cust-3", "CUSTOMER_REQUEST", "trace-x");
-        consumer.onOrderCancelled(payload, "trace-x");
+        consumer.onOrderCancelled(payload, "trace-x", ack);
 
         verify(service).sendOrderCancellation(
-                eq("ord-3"), eq("cust-3"), anyString(), eq("CUSTOMER_REQUEST"), eq("trace-x"));
+                eq("ord-3"), eq("cust-3"), anyString(), eq("CUSTOMER_REQUEST"), eq("trace-x"), eq("ev-2"));
+        verify(ack).acknowledge();
     }
 
     @Test
-    void onOrderCancelled_invalidPayload_shouldThrowRuntimeException() {
-        assertThatThrownBy(() -> consumer.onOrderCancelled("not-json", null))
+    void onOrderCancelled_invalidPayload_shouldThrowWithoutAck() {
+        assertThatThrownBy(() -> consumer.onOrderCancelled("not-json", null, ack))
                 .isInstanceOf(RuntimeException.class);
+        verify(ack, never()).acknowledge();
     }
 
     // ─── onOrderCancelRequested ───────────────────────────────────────────────
 
     @Test
-    void onOrderCancelRequested_withFailedProducts_shouldPassFirstProduct() throws Exception {
-        when(service.sendInventoryAlert(anyString(), anyString(), anyString(), anyString(), anyString()))
+    void onOrderCancelRequested_withFailedProducts_shouldPassFirstProductAndAck() throws Exception {
+        when(service.sendInventoryAlert(anyString(), anyString(), anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(dummyResponse("ord-4"));
 
         String payload = buildOrderCancelRequestedPayload("ord-4", "prod-A", "trace-y");
-        consumer.onOrderCancelRequested(payload, "trace-y");
+        consumer.onOrderCancelRequested(payload, "trace-y", ack);
 
         verify(service).sendInventoryAlert(
-                eq("ord-4"), anyString(), anyString(), eq("prod-A"), eq("trace-y"));
+                eq("ord-4"), anyString(), anyString(), eq("prod-A"), eq("trace-y"), eq("ev-3"));
+        verify(ack).acknowledge();
     }
 
     // ─── onOrderReturned ─────────────────────────────────────────────────────
 
     @Test
-    void onOrderReturned_validPayload_shouldCallSendReturnConfirmation() throws Exception {
-        when(service.sendReturnConfirmation(anyString(), anyString(), anyString(), any(), any(), anyString()))
+    void onOrderReturned_validPayload_shouldCallSendReturnConfirmationAndAck() throws Exception {
+        when(service.sendReturnConfirmation(anyString(), anyString(), anyString(), any(), any(), anyString(), anyString()))
                 .thenReturn(dummyResponse("ord-5"));
 
         String payload = buildOrderReturnedPayload("ord-5", "cust-5", "50.00", "trace-z");
-        consumer.onOrderReturned(payload, "trace-z");
+        consumer.onOrderReturned(payload, "trace-z", ack);
 
         verify(service).sendReturnConfirmation(
                 eq("ord-5"), eq("cust-5"), anyString(), isNull(),
-                eq(new java.math.BigDecimal("50.00")), eq("trace-z"));
+                eq(new java.math.BigDecimal("50.00")), eq("trace-z"), eq("ev-4"));
+        verify(ack).acknowledge();
     }
 
     @Test
-    void onOrderReturned_invalidPayload_shouldThrowRuntimeException() {
-        assertThatThrownBy(() -> consumer.onOrderReturned("{bad-json}", null))
+    void onOrderReturned_invalidPayload_shouldThrowWithoutAck() {
+        assertThatThrownBy(() -> consumer.onOrderReturned("{bad-json}", null, ack))
                 .isInstanceOf(RuntimeException.class);
+        verify(ack, never()).acknowledge();
+    }
+
+    // ─── handleDlt ────────────────────────────────────────────────────────────
+
+    @Test
+    void handleDlt_shouldPersistDeadLetterNotification() {
+        when(deadLetterRepository.save(any(DeadLetterNotification.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        consumer.handleDlt("{payload}", "order.created.DLT", "order.created", 1, 42L,
+                "ord-9", "RuntimeException", "delivery failed", "trace-dlt");
+
+        ArgumentCaptor<DeadLetterNotification> captor = ArgumentCaptor.forClass(DeadLetterNotification.class);
+        verify(deadLetterRepository).save(captor.capture());
+
+        DeadLetterNotification saved = captor.getValue();
+        assertThat(saved.getOriginalTopic()).isEqualTo("order.created");
+        assertThat(saved.getOriginalPartition()).isEqualTo(1);
+        assertThat(saved.getOriginalOffset()).isEqualTo(42L);
+        assertThat(saved.getMessageKey()).isEqualTo("ord-9");
+        assertThat(saved.getExceptionMessage()).isEqualTo("delivery failed");
+        assertThat(saved.getTraceId()).isEqualTo("trace-dlt");
+    }
+
+    @Test
+    void handleDlt_persistenceFailure_shouldNotThrow() {
+        when(deadLetterRepository.save(any())).thenThrow(new RuntimeException("db down"));
+
+        // must not propagate — DLT handler failure must not kill the listener
+        consumer.handleDlt("{payload}", "order.created.DLT", null, null, null,
+                null, null, null, null);
     }
 
     // ─── Helper builders ──────────────────────────────────────────────────────

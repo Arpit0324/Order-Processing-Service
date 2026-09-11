@@ -1,0 +1,13 @@
+{
+  "eventId": "evt-ocr-003",
+  "eventType": "ORDER_CANCEL_REQUESTED",
+  "eventVersion": 1,
+  "occurredAt": "2026-01-01T00:10:00Z",
+  "traceId": "trace-ocr-003",
+  "payload": {
+    "orderId": "ord-1003",
+    "reason": "INSUFFICIENT_STOCK",
+    "failedProducts": ["prod-9", "prod-8"],
+    "customerEmail": "stockout@example.com"
+  }
+}

@@ -1,7 +1,9 @@
 package com.ops.notification.service;
 
 import org.apache.pekko.actor.typed.ActorRef;
+import com.ops.notification.actor.DeliveryResult;
 import com.ops.notification.actor.NotificationCommand;
+import com.ops.notification.actor.NotificationDispatcher;
 import com.ops.notification.domain.NotificationRecord;
 import com.ops.notification.dto.NotificationResponse;
 import com.ops.notification.kafka.NotificationEventProducer;
@@ -16,9 +18,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -28,8 +33,7 @@ class NotificationServiceImplTest {
     private NotificationRepository repository;
 
     @Mock
-    @SuppressWarnings("unchecked")
-    private ActorRef<NotificationCommand> router;
+    private NotificationDispatcher dispatcher;
 
     @Mock
     private NotificationEventProducer producer;
@@ -38,7 +42,12 @@ class NotificationServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new NotificationServiceImpl(repository, router, producer);
+        service = new NotificationServiceImpl(repository, dispatcher, producer);
+    }
+
+    @SuppressWarnings("unchecked")
+    private void stubSuccessfulDelivery() {
+        when(dispatcher.dispatch(any(Function.class))).thenReturn(DeliveryResult.ok("notif-id"));
     }
 
     // ─── sendOrderConfirmation ────────────────────────────────────────────────
@@ -46,61 +55,112 @@ class NotificationServiceImplTest {
     @Test
     void sendOrderConfirmation_shouldPersistRecordWithCorrectFields() {
         when(repository.save(any(NotificationRecord.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSuccessfulDelivery();
 
         NotificationResponse response = service.sendOrderConfirmation(
                 "ord-1", "cust-1", "test@example.com", "+1234567890",
-                new BigDecimal("99.99"), "trace-1");
+                new BigDecimal("99.99"), "trace-1", "ev-1");
 
         ArgumentCaptor<NotificationRecord> captor = ArgumentCaptor.forClass(NotificationRecord.class);
-        verify(repository).save(captor.capture());
+        verify(repository, atLeastOnce()).save(captor.capture());
 
         NotificationRecord saved = captor.getValue();
         assertThat(saved.getOrderId()).isEqualTo("ord-1");
         assertThat(saved.getChannel()).isEqualTo("EMAIL");
         assertThat(saved.getRecipient()).isEqualTo("test@example.com");
         assertThat(saved.getTemplate()).isEqualTo("ORDER_CONFIRMED");
-        assertThat(saved.getStatus()).isEqualTo("PENDING");
+        assertThat(saved.getEventId()).isEqualTo("ev-1");
+        // same managed instance is re-saved after delivery → terminal state DELIVERED
+        assertThat(saved.getStatus()).isEqualTo("DELIVERED");
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void sendOrderConfirmation_shouldDispatchToActorRouter() {
         when(repository.save(any(NotificationRecord.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSuccessfulDelivery();
 
         service.sendOrderConfirmation("ord-1", "cust-1", "test@example.com", null,
-                new BigDecimal("99.99"), "trace-1");
+                new BigDecimal("99.99"), "trace-1", "ev-1");
 
-        ArgumentCaptor<NotificationCommand> captor = ArgumentCaptor.forClass(NotificationCommand.class);
-        verify(router).tell(captor.capture());
+        ArgumentCaptor<Function<ActorRef<DeliveryResult>, NotificationCommand>> captor =
+                ArgumentCaptor.forClass(Function.class);
+        verify(dispatcher).dispatch(captor.capture());
 
-        assertThat(captor.getValue()).isInstanceOf(NotificationCommand.SendOrderConfirmation.class);
+        ActorRef<DeliveryResult> replyTo = mock(ActorRef.class);
+        NotificationCommand dispatched = captor.getValue().apply(replyTo);
+        assertThat(dispatched).isInstanceOf(NotificationCommand.SendOrderConfirmation.class);
         NotificationCommand.SendOrderConfirmation cmd =
-                (NotificationCommand.SendOrderConfirmation) captor.getValue();
+                (NotificationCommand.SendOrderConfirmation) dispatched;
         assertThat(cmd.orderId()).isEqualTo("ord-1");
         assertThat(cmd.traceId()).isEqualTo("trace-1");
+        assertThat(cmd.replyTo()).isSameAs(replyTo);
     }
 
     @Test
     void sendOrderConfirmation_shouldPublishKafkaEvent() {
         when(repository.save(any(NotificationRecord.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSuccessfulDelivery();
 
         service.sendOrderConfirmation("ord-1", "cust-1", "test@example.com", null,
-                new BigDecimal("99.99"), "trace-1");
+                new BigDecimal("99.99"), "trace-1", "ev-1");
 
         verify(producer).publishNotificationSent(any(NotificationRecord.class), eq("trace-1"));
     }
 
     @Test
-    void sendOrderConfirmation_shouldReturnResponseWithPendingStatus() {
+    void sendOrderConfirmation_shouldReturnResponseWithDeliveredStatus() {
         when(repository.save(any(NotificationRecord.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSuccessfulDelivery();
 
         NotificationResponse response = service.sendOrderConfirmation(
                 "ord-1", "cust-1", "test@example.com", null,
-                new BigDecimal("49.50"), "trace-1");
+                new BigDecimal("49.50"), "trace-1", "ev-1");
 
         assertThat(response).isNotNull();
         assertThat(response.orderId()).isEqualTo("ord-1");
-        assertThat(response.status()).isEqualTo("PENDING");
+        assertThat(response.status()).isEqualTo("DELIVERED");
         assertThat(response.template()).isEqualTo("ORDER_CONFIRMED");
+    }
+
+    @Test
+    void sendOrderConfirmation_duplicateEvent_shouldSkipPersistAndDispatch() {
+        when(repository.existsByEventIdAndTemplateAndChannel("ev-dup", "ORDER_CONFIRMED", "EMAIL"))
+                .thenReturn(true);
+
+        service.sendOrderConfirmation("ord-1", "cust-1", "test@example.com", null,
+                new BigDecimal("99.99"), "trace-1", "ev-dup");
+
+        verify(repository, never()).save(any());
+        verify(dispatcher, never()).dispatch(any());
+        verify(producer, never()).publishNotificationSent(any(), anyString());
+    }
+
+    @Test
+    void sendOrderConfirmation_deliveryFailure_shouldThrowAndNotPublish() {
+        when(repository.save(any(NotificationRecord.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(dispatcher.dispatch(any())).thenReturn(DeliveryResult.failed("notif-id", "smtp down"));
+
+        assertThatThrownBy(() -> service.sendOrderConfirmation(
+                "ord-1", "cust-1", "test@example.com", null,
+                new BigDecimal("99.99"), "trace-1", "ev-1"))
+                .isInstanceOf(NotificationDeliveryException.class)
+                .hasMessageContaining("smtp down");
+
+        verify(producer, never()).publishNotificationSent(any(), anyString());
+    }
+
+    @Test
+    void sendOrderConfirmation_dispatchException_shouldPropagateAndNotPublish() {
+        when(repository.save(any(NotificationRecord.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(dispatcher.dispatch(any())).thenThrow(new NotificationDeliveryException("timeout"));
+
+        assertThatThrownBy(() -> service.sendOrderConfirmation(
+                "ord-1", "cust-1", "test@example.com", null,
+                new BigDecimal("99.99"), "trace-1", "ev-1"))
+                .isInstanceOf(NotificationDeliveryException.class);
+
+        verify(producer, never()).publishNotificationSent(any(), anyString());
     }
 
     // ─── sendOrderCancellation ────────────────────────────────────────────────
@@ -108,28 +168,33 @@ class NotificationServiceImplTest {
     @Test
     void sendOrderCancellation_shouldPersistWithOrderCancelledTemplate() {
         when(repository.save(any(NotificationRecord.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSuccessfulDelivery();
 
         service.sendOrderCancellation("ord-2", "cust-2", "cancel@example.com",
-                "CUSTOMER_REQUEST", "trace-2");
+                "CUSTOMER_REQUEST", "trace-2", "ev-2");
 
         ArgumentCaptor<NotificationRecord> captor = ArgumentCaptor.forClass(NotificationRecord.class);
-        verify(repository).save(captor.capture());
+        verify(repository, atLeastOnce()).save(captor.capture());
 
-        assertThat(captor.getValue().getTemplate()).isEqualTo("ORDER_CANCELLED");
-        assertThat(captor.getValue().getOrderId()).isEqualTo("ord-2");
+        assertThat(captor.getAllValues().get(0).getTemplate()).isEqualTo("ORDER_CANCELLED");
+        assertThat(captor.getAllValues().get(0).getOrderId()).isEqualTo("ord-2");
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void sendOrderCancellation_shouldDispatchSendOrderCancellationCommand() {
         when(repository.save(any(NotificationRecord.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSuccessfulDelivery();
 
         service.sendOrderCancellation("ord-2", "cust-2", "cancel@example.com",
-                "CUSTOMER_REQUEST", "trace-2");
+                "CUSTOMER_REQUEST", "trace-2", "ev-2");
 
-        ArgumentCaptor<NotificationCommand> captor = ArgumentCaptor.forClass(NotificationCommand.class);
-        verify(router).tell(captor.capture());
+        ArgumentCaptor<Function<ActorRef<DeliveryResult>, NotificationCommand>> captor =
+                ArgumentCaptor.forClass(Function.class);
+        verify(dispatcher).dispatch(captor.capture());
 
-        assertThat(captor.getValue()).isInstanceOf(NotificationCommand.SendOrderCancellation.class);
+        NotificationCommand dispatched = captor.getValue().apply(mock(ActorRef.class));
+        assertThat(dispatched).isInstanceOf(NotificationCommand.SendOrderCancellation.class);
     }
 
     // ─── sendInventoryAlert ───────────────────────────────────────────────────
@@ -137,29 +202,34 @@ class NotificationServiceImplTest {
     @Test
     void sendInventoryAlert_shouldPersistWithOutOfStockTemplate() {
         when(repository.save(any(NotificationRecord.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSuccessfulDelivery();
 
         service.sendInventoryAlert("ord-3", "cust-3", "alert@example.com",
-                "prod-99", "trace-3");
+                "prod-99", "trace-3", "ev-3");
 
         ArgumentCaptor<NotificationRecord> captor = ArgumentCaptor.forClass(NotificationRecord.class);
-        verify(repository).save(captor.capture());
+        verify(repository, atLeastOnce()).save(captor.capture());
 
-        assertThat(captor.getValue().getTemplate()).isEqualTo("ORDER_CANCELLED_OUT_OF_STOCK");
+        assertThat(captor.getAllValues().get(0).getTemplate()).isEqualTo("ORDER_CANCELLED_OUT_OF_STOCK");
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void sendInventoryAlert_shouldDispatchSendInventoryAlertCommand() {
         when(repository.save(any(NotificationRecord.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSuccessfulDelivery();
 
         service.sendInventoryAlert("ord-3", "cust-3", "alert@example.com",
-                "prod-99", "trace-3");
+                "prod-99", "trace-3", "ev-3");
 
-        ArgumentCaptor<NotificationCommand> captor = ArgumentCaptor.forClass(NotificationCommand.class);
-        verify(router).tell(captor.capture());
+        ArgumentCaptor<Function<ActorRef<DeliveryResult>, NotificationCommand>> captor =
+                ArgumentCaptor.forClass(Function.class);
+        verify(dispatcher).dispatch(captor.capture());
 
-        assertThat(captor.getValue()).isInstanceOf(NotificationCommand.SendInventoryAlert.class);
+        NotificationCommand dispatched = captor.getValue().apply(mock(ActorRef.class));
+        assertThat(dispatched).isInstanceOf(NotificationCommand.SendInventoryAlert.class);
         NotificationCommand.SendInventoryAlert cmd =
-                (NotificationCommand.SendInventoryAlert) captor.getValue();
+                (NotificationCommand.SendInventoryAlert) dispatched;
         assertThat(cmd.failedProductId()).isEqualTo("prod-99");
     }
 
@@ -168,14 +238,15 @@ class NotificationServiceImplTest {
     @Test
     void sendReturnConfirmation_shouldPersistWithReturnApprovedTemplate() {
         when(repository.save(any(NotificationRecord.class))).thenAnswer(inv -> inv.getArgument(0));
+        stubSuccessfulDelivery();
 
         service.sendReturnConfirmation("ord-4", "cust-4", "return@example.com",
-                "+9999999999", new BigDecimal("25.00"), "trace-4");
+                "+9999999999", new BigDecimal("25.00"), "trace-4", "ev-4");
 
         ArgumentCaptor<NotificationRecord> captor = ArgumentCaptor.forClass(NotificationRecord.class);
-        verify(repository).save(captor.capture());
+        verify(repository, atLeastOnce()).save(captor.capture());
 
-        assertThat(captor.getValue().getTemplate()).isEqualTo("RETURN_APPROVED");
+        assertThat(captor.getAllValues().get(0).getTemplate()).isEqualTo("RETURN_APPROVED");
     }
 
     // ─── getById ─────────────────────────────────────────────────────────────

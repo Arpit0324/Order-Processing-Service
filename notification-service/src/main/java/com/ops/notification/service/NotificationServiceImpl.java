@@ -1,36 +1,49 @@
 package com.ops.notification.service;
 
 import org.apache.pekko.actor.typed.ActorRef;
+import com.ops.notification.actor.DeliveryResult;
 import com.ops.notification.actor.NotificationCommand;
+import com.ops.notification.actor.NotificationDispatcher;
 import com.ops.notification.domain.NotificationRecord;
 import com.ops.notification.dto.NotificationResponse;
 import com.ops.notification.kafka.NotificationEventProducer;
 import com.ops.notification.repository.NotificationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 // ── SERVICE LAYER: all business logic lives here ──────────────────────────────
-// Consumer → Service → Actor (async dispatch) + Repository (persist) + Producer (Kafka)
+// Consumer → Service → Dispatcher (actor ask) + Repository (persist) + Producer (Kafka)
+//
+// Reliability semantics:
+//  - Duplicate events (same eventId) are no-ops — checked before insert and
+//    enforced by a unique constraint for races.
+//  - Dispatch is a synchronous ask: the Kafka offset is only acknowledged after
+//    the channel actor reports success/failure.
+//  - On failure we throw → @Transactional rolls back the PENDING row and
+//    @RetryableTopic redelivers; after retries are exhausted the DLT handler
+//    persists the message to dead_letter_notifications.
 @Service
 public class NotificationServiceImpl implements NotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationServiceImpl.class);
 
-    private final NotificationRepository   repository;
-    private final ActorRef<NotificationCommand> router;
-    private final NotificationEventProducer    producer;
+    private final NotificationRepository      repository;
+    private final NotificationDispatcher      dispatcher;
+    private final NotificationEventProducer   producer;
 
     public NotificationServiceImpl(NotificationRepository repository,
-                                   ActorRef<NotificationCommand> router,
+                                   NotificationDispatcher dispatcher,
                                    NotificationEventProducer producer) {
         this.repository = repository;
-        this.router     = router;
+        this.dispatcher = dispatcher;
         this.producer   = producer;
     }
 
@@ -38,11 +51,13 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     public NotificationResponse sendOrderConfirmation(String orderId, String customerId,
                                                        String email, String phone,
-                                                       BigDecimal totalAmount, String traceId) {
+                                                       BigDecimal totalAmount, String traceId,
+                                                       String eventId) {
         var record = new NotificationRecord(orderId, "EMAIL", email, "ORDER_CONFIRMED",
-                "{\"totalAmount\":\"" + totalAmount + "\"}");
+                "{\"totalAmount\":\"" + totalAmount + "\"}", eventId);
         persistAndDispatch(record,
-                new NotificationCommand.SendOrderConfirmation(orderId, customerId, email, phone, totalAmount, traceId),
+                replyTo -> new NotificationCommand.SendOrderConfirmation(
+                        record.getId(), orderId, customerId, email, phone, totalAmount, traceId, replyTo),
                 traceId);
         return NotificationResponse.from(record);
     }
@@ -50,11 +65,13 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public NotificationResponse sendOrderCancellation(String orderId, String customerId,
-                                                       String email, String reason, String traceId) {
+                                                       String email, String reason, String traceId,
+                                                       String eventId) {
         var record = new NotificationRecord(orderId, "EMAIL", email, "ORDER_CANCELLED",
-                "{\"reason\":\"" + reason + "\"}");
+                "{\"reason\":\"" + reason + "\"}", eventId);
         persistAndDispatch(record,
-                new NotificationCommand.SendOrderCancellation(orderId, customerId, email, reason, traceId),
+                replyTo -> new NotificationCommand.SendOrderCancellation(
+                        record.getId(), orderId, customerId, email, reason, traceId, replyTo),
                 traceId);
         return NotificationResponse.from(record);
     }
@@ -62,11 +79,13 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public NotificationResponse sendInventoryAlert(String orderId, String customerId,
-                                                    String email, String failedProductId, String traceId) {
+                                                    String email, String failedProductId, String traceId,
+                                                    String eventId) {
         var record = new NotificationRecord(orderId, "EMAIL", email, "ORDER_CANCELLED_OUT_OF_STOCK",
-                "{\"productId\":\"" + failedProductId + "\"}");
+                "{\"productId\":\"" + failedProductId + "\"}", eventId);
         persistAndDispatch(record,
-                new NotificationCommand.SendInventoryAlert(orderId, customerId, email, failedProductId, traceId),
+                replyTo -> new NotificationCommand.SendInventoryAlert(
+                        record.getId(), orderId, customerId, email, failedProductId, traceId, replyTo),
                 traceId);
         return NotificationResponse.from(record);
     }
@@ -75,11 +94,13 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional
     public NotificationResponse sendReturnConfirmation(String orderId, String customerId,
                                                         String email, String phone,
-                                                        BigDecimal refundAmount, String traceId) {
+                                                        BigDecimal refundAmount, String traceId,
+                                                        String eventId) {
         var record = new NotificationRecord(orderId, "EMAIL", email, "RETURN_APPROVED",
-                "{\"refundAmount\":\"" + refundAmount + "\"}");
+                "{\"refundAmount\":\"" + refundAmount + "\"}", eventId);
         persistAndDispatch(record,
-                new NotificationCommand.SendReturnConfirmation(orderId, customerId, email, phone, refundAmount, traceId),
+                replyTo -> new NotificationCommand.SendReturnConfirmation(
+                        record.getId(), orderId, customerId, email, phone, refundAmount, traceId, replyTo),
                 traceId);
         return NotificationResponse.from(record);
     }
@@ -95,21 +116,40 @@ public class NotificationServiceImpl implements NotificationService {
                 .stream().map(NotificationResponse::from).toList();
     }
 
-    // ── Private: save to DB first, then fire-and-forget to actor ─────────────
-    // DB save is synchronous (within @Transactional) — ensures audit record exists
-    // even if actor dispatch fails. Kafka publish is async best-effort.
+    // ── Private: dedupe → persist → synchronous dispatch → status transition ──
     private void persistAndDispatch(NotificationRecord record,
-                                    NotificationCommand command,
+                                    Function<ActorRef<DeliveryResult>, NotificationCommand> commandFactory,
                                     String traceId) {
-        repository.save(record);
+        // Idempotency: duplicate Kafka delivery of the same event is a no-op
+        if (record.getEventId() != null
+                && repository.existsByEventIdAndTemplateAndChannel(
+                        record.getEventId(), record.getTemplate(), record.getChannel())) {
+            log.info("Duplicate event skipped eventId={} template={} orderId={}",
+                    record.getEventId(), record.getTemplate(), record.getOrderId());
+            return;
+        }
 
-        // Dispatch to actor pool (non-blocking, fire-and-forget)
-        router.tell(command);
+        try {
+            repository.save(record);
+        } catch (DataIntegrityViolationException dup) {
+            // Race: another instance persisted the same event first
+            log.info("Duplicate event (unique constraint) eventId={} template={} orderId={}",
+                    record.getEventId(), record.getTemplate(), record.getOrderId());
+            return;
+        }
 
-        // Publish Kafka event asynchronously
-        producer.publishNotificationSent(record, traceId);
+        DeliveryResult result = dispatcher.dispatch(commandFactory);
 
-        log.info("Notification dispatched id={} template={} orderId={} traceId={}",
-                record.getId(), record.getTemplate(), record.getOrderId(), traceId);
+        if (result.success()) {
+            record.markDelivered();
+            repository.save(record);
+            producer.publishNotificationSent(record, traceId);
+            log.info("Notification delivered id={} template={} orderId={} traceId={}",
+                    record.getId(), record.getTemplate(), record.getOrderId(), traceId);
+        } else {
+            // Roll back the PENDING row; Kafka redelivery retries the whole flow
+            throw new NotificationDeliveryException(
+                    "Delivery failed for notification " + record.getId() + ": " + result.error());
+        }
     }
 }

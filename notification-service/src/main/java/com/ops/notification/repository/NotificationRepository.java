@@ -14,9 +14,14 @@ public interface NotificationRepository extends JpaRepository<NotificationRecord
 
     List<NotificationRecord> findByStatus(String status);
 
+    long countByStatus(String status);
+
     // Find all failed/pending for retry job
     @Query("SELECT n FROM NotificationRecord n WHERE n.status IN ('PENDING','FAILED') AND n.attempts < 3")
     List<NotificationRecord> findRetryable();
 
     long countByOrderIdAndTemplate(String orderId, String template);
+
+    // Idempotency check — has this event already produced this notification?
+    boolean existsByEventIdAndTemplateAndChannel(String eventId, String template, String channel);
 }

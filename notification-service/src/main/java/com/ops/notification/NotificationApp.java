@@ -4,6 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.retry.annotation.EnableRetry;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 // ── Boot sequence ─────────────────────────────────────────────────────────────
 // 1. Spring Boot context starts
@@ -16,6 +17,7 @@ import org.springframework.retry.annotation.EnableRetry;
 @SpringBootApplication
 @EnableKafka
 @EnableRetry
+@EnableScheduling
 public class NotificationApp {
     public static void main(String[] args) {
         SpringApplication.run(NotificationApp.class, args);

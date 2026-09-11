@@ -110,3 +110,63 @@ spec:
         target:
           type:               Utilization
           averageUtilization: 70
+---
+# ── Notification Service HPA — CPU-based ─────────────────────────────────────
+# Scales 2–8 replicas on CPU. Kafka consumer-group rebalancing spreads the
+# order.* partitions across the new replicas. For lag-driven scaling, install
+# KEDA and use the ScaledObject below.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: notification-service-hpa
+  namespace: ops-system
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: notification-service
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type:               Utilization
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300      # in-flight actor asks — drain slowly
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+---
+# ── KEDA ScaledObject for notification-service (install KEDA first) ──────────
+# Scales on order.created consumer lag for the notification consumer group.
+# Uncomment when KEDA is installed in the cluster.
+#
+# apiVersion: keda.sh/v1alpha1
+# kind: ScaledObject
+# metadata:
+#   name: notification-service-kafka-scaler
+#   namespace: ops-system
+# spec:
+#   scaleTargetRef:
+#     name: notification-service
+#   minReplicaCount: 2
+#   maxReplicaCount: 8
+#   triggers:
+#     - type: kafka
+#       metadata:
+#         bootstrapServers: kafka-service:9092
+#         consumerGroup:    notification-service-orders
+#         topic:            order.created
+#         lagThreshold:     "50"
+#         offsetResetPolicy: earliest
