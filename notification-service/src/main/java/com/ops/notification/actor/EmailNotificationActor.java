@@ -54,20 +54,24 @@ public class EmailNotificationActor extends AbstractBehavior<EmailNotificationAc
 
     private Behavior<EmailCommand> onEmail(EmailCommand cmd) {
         Timer.Sample sample = Timer.start(registry);
+        DeliveryAck ack;
         try {
             sendEmail(cmd);
             log.info("Email sent template={} to={} orderId={} traceId={}",
                     cmd.template(), cmd.to(), cmd.orderId(), cmd.traceId());
-            cmd.replyTo().tell(DeliveryAck.ok());
+            ack = DeliveryAck.ok();
         } catch (Exception ex) {
             log.error("Email delivery failed template={} to={} orderId={}: {}",
                     cmd.template(), cmd.to(), cmd.orderId(), ex.getMessage());
             // Report failure via ack instead of throwing — retries are driven
             // by the service layer / Kafka, not by supervisor restart loops.
-            cmd.replyTo().tell(DeliveryAck.failed(ex.getMessage()));
+            ack = DeliveryAck.failed(ex.getMessage());
         } finally {
             sample.stop(sendTimer);
         }
+        // Ack sent only after latency is recorded — callers awaiting the ack
+        // can rely on metrics being published.
+        cmd.replyTo().tell(ack);
         return this;
     }
 
