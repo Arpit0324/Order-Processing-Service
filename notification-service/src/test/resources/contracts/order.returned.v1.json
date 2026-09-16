@@ -1,0 +1,17 @@
+{
+  "eventId": "evt-ret-004",
+  "eventType": "ORDER_RETURNED",
+  "eventVersion": 1,
+  "occurredAt": "2026-01-01T00:15:00Z",
+  "traceId": "trace-ret-004",
+  "payload": {
+    "orderId": "ord-1004",
+    "customerId": "cust-4",
+    "items": [
+      { "productId": "prod-4", "quantity": 1, "unitPrice": 50.00 }
+    ],
+    "refundAmount": 50.00,
+    "customerEmail": "return@example.com",
+    "customerPhone": "+15559876543"
+  }
+}

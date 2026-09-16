@@ -48,16 +48,25 @@ public class NotificationRecord {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "event_id")
+    private String eventId;    // idempotency key from the source Kafka event
+
     protected NotificationRecord() {}
 
     public NotificationRecord(String orderId, String channel, String recipient,
                                String template, String payload) {
+        this(orderId, channel, recipient, template, payload, null);
+    }
+
+    public NotificationRecord(String orderId, String channel, String recipient,
+                               String template, String payload, String eventId) {
         this.id        = UUID.randomUUID().toString();
         this.orderId   = orderId;
         this.channel   = channel;
         this.recipient = recipient;
         this.template  = template;
         this.payload   = payload;
+        this.eventId   = eventId;
         this.status    = "PENDING";
         this.createdAt = Instant.now();
     }
@@ -74,6 +83,7 @@ public class NotificationRecord {
     public Instant getSentAt()    { return sentAt; }
     public String  getErrorMsg()  { return errorMsg; }
     public Instant getCreatedAt() { return createdAt; }
+    public String  getEventId()   { return eventId; }
 
     // ── State transitions ─────────────────────────────────────────────────────
     public void markDelivered() {

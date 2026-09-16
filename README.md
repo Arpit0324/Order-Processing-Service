@@ -31,7 +31,7 @@ graph TD
 | [api-gateway](./api-gateway/README.md) | Java 21 + Spring Boot 3 | 8080 | JWT auth, routing, rate-limit, circuit breaker, Swagger |
 | [order-service](./order-service/README.md) | Scala 3 + Pekko Typed | 8081 | Order lifecycle with event sourcing, saga compensation |
 | [inventory-service](./inventory-service/README.md) | Scala 3 + Pekko Streams | 8082 | Stock reservation, reactive Kafka pipeline, Redis cache |
-| [notification-service](./notification-service/README.md) | Java 21 + Spring Boot 3 | 8083 | Multi-channel notifications (email/SMS), Kafka consumer |
+| [notification-service](./notification-service/README.md) | Java 21 + Spring Boot 3 | 8083 | Reliable multi-channel notifications: idempotent Kafka consumer, Pekko actor dispatch, DLT persistence |
 | [shared](./shared/README.md) | Scala 3 | — | Kafka event schemas, JSON codecs, domain value objects |
 
 ---

@@ -44,7 +44,9 @@ spring:
       acks:             all         # wait for all replicas to acknowledge
       retries:          3
     listener:
-      ack-mode: MANUAL_IMMEDIATE    # commit offset only after handler completes
+      ack-mode: MANUAL    # listener commits the offset only after a durable outcome
+                          # (delivered or duplicate-skipped); failures are redelivered
+                          # via @RetryableTopic and exhausted messages land in the DLT
 
   jackson:
     serialization:
@@ -54,6 +56,44 @@ spring:
 server:
   port: ${SERVER_PORT:8083}
 
+# ── Notification delivery providers ──────────────────────────────────────────
+# spring.mail.* is only applied when NOTIFICATION_EMAIL_ENABLED=true.
+notification:
+  email:
+    enabled:   ${NOTIFICATION_EMAIL_ENABLED:false}   # stub mode by default in dev
+    from:      ${NOTIFICATION_FROM_EMAIL:no-reply@ops.local}
+    host:      ${SMTP_HOST:localhost}
+    port:      ${SMTP_PORT:587}
+    username:  ${SMTP_USERNAME:}
+    password:  ${SMTP_PASSWORD:}
+  sms:
+    enabled:   ${NOTIFICATION_SMS_ENABLED:false}     # stub mode by default in dev
+    from:      ${SMS_FROM_NUMBER:}
+  actor:
+    email-pool-size: ${NOTIFICATION_ACTOR_EMAIL_POOL_SIZE:4}
+    sms-pool-size:   ${NOTIFICATION_ACTOR_SMS_POOL_SIZE:2}
+  retry:
+    enabled:     ${NOTIFICATION_RETRY_ENABLED:true}
+    interval-ms: ${NOTIFICATION_RETRY_INTERVAL_MS:300000}
+    max-attempts: ${NOTIFICATION_RETRY_MAX_ATTEMPTS:5}
+
+# ── Circuit breakers around external delivery providers ──────────────────────
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        slow-call-duration-threshold: 5s
+        slow-call-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+    instances:
+      emailProvider:
+        base-config: default
+      smsProvider:
+        base-config: default
+
 management:
   endpoints:
     web:
@@ -62,6 +102,18 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true          # expose /health/liveness and /health/readiness
+      group:
+        liveness:
+          include: livenessState,actorSystem
+        readiness:
+          # readiness reflects everything needed to safely consume work:
+          # DB + Flyway (db), Kafka broker reachability, and the actor system
+          include: readinessState,db,kafka,actorSystem
+  health:
+    db:
+      enabled: true
 
 pekko:
   actor:

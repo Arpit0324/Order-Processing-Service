@@ -1,0 +1,17 @@
+{
+  "eventId": "evt-ocx-002",
+  "eventType": "ORDER_CANCELLED",
+  "eventVersion": 1,
+  "occurredAt": "2026-01-01T00:05:00Z",
+  "traceId": "trace-ocx-002",
+  "payload": {
+    "orderId": "ord-1002",
+    "customerId": "cust-2",
+    "reason": "CUSTOMER_REQUEST",
+    "wasConfirmed": true,
+    "items": [
+      { "productId": "prod-2", "quantity": 1, "unitPrice": 12.50 }
+    ],
+    "customerEmail": "cancel@example.com"
+  }
+}

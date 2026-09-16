@@ -15,6 +15,8 @@ sealed trait KafkaEvent {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Topic: order.created  (key = orderId)
+// Producer: order-service   Consumers: inventory-service, notification-service
+// Schema version: 1 (add fields only; bump eventVersion for breaking changes)
 // ─────────────────────────────────────────────────────────────────────────────
 final case class OrderCreatedEvent(
   eventId:         String,
@@ -25,7 +27,9 @@ final case class OrderCreatedEvent(
   customerId:      String,
   items:           List[ItemLine],
   totalAmount:     BigDecimal,
-  shippingAddress: ShippingAddress
+  shippingAddress: ShippingAddress,
+  customerEmail:   Option[String] = None,   // recipient snapshot for notification-service
+  customerPhone:   Option[String] = None
 ) extends KafkaEvent {
   val eventType = "ORDER_CREATED"
 }
@@ -33,6 +37,8 @@ final case class OrderCreatedEvent(
 // ─────────────────────────────────────────────────────────────────────────────
 // Topic: order.cancelled  (key = orderId)
 // wasConfirmed=true means inventory was reserved and must be released
+// Producer: order-service   Consumers: inventory-service, notification-service
+// Schema version: 1
 // ─────────────────────────────────────────────────────────────────────────────
 final case class OrderCancelledEvent(
   eventId:      String,
@@ -43,7 +49,9 @@ final case class OrderCancelledEvent(
   customerId:   String,
   reason:       String,         // CUSTOMER_REQUEST | INSUFFICIENT_STOCK | SLA_TIMEOUT | PAYMENT_FAILED
   wasConfirmed: Boolean,        // if true, inventory service must release reservation
-  items:        List[ItemLine]  // needed by inventory to know which products to release
+  items:        List[ItemLine], // needed by inventory to know which products to release
+  customerEmail: Option[String] = None,
+  customerPhone: Option[String] = None
 ) extends KafkaEvent {
   val eventType = "ORDER_CANCELLED"
 }
@@ -51,6 +59,8 @@ final case class OrderCancelledEvent(
 // ─────────────────────────────────────────────────────────────────────────────
 // Topic: order.cancel.requested  (key = orderId)
 // Saga compensation — published by Inventory Service on reservation failure
+// Producer: inventory-service   Consumers: order-service, notification-service
+// Schema version: 1
 // ─────────────────────────────────────────────────────────────────────────────
 final case class OrderCancelRequestedEvent(
   eventId:        String,
@@ -59,7 +69,9 @@ final case class OrderCancelRequestedEvent(
   traceId:        String,
   orderId:        String,
   reason:         String,       // INSUFFICIENT_STOCK
-  failedProducts: List[String]  // productIds that had insufficient stock
+  failedProducts: List[String], // productIds that had insufficient stock
+  customerEmail:  Option[String] = None,
+  customerPhone:  Option[String] = None
 ) extends KafkaEvent {
   val eventType = "ORDER_CANCEL_REQUESTED"
 }
@@ -82,6 +94,8 @@ final case class OrderReturnRequestedEvent(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Topic: order.returned  (key = orderId)
+// Producer: order-service   Consumers: notification-service
+// Schema version: 1
 // ─────────────────────────────────────────────────────────────────────────────
 final case class OrderReturnedEvent(
   eventId:      String,
@@ -91,7 +105,9 @@ final case class OrderReturnedEvent(
   orderId:      String,
   customerId:   String,
   items:        List[ItemLine],
-  refundAmount: BigDecimal
+  refundAmount: BigDecimal,
+  customerEmail: Option[String] = None,
+  customerPhone: Option[String] = None
 ) extends KafkaEvent {
   val eventType = "ORDER_RETURNED"
 }
@@ -115,6 +131,8 @@ final case class InventoryUpdatedEvent(
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Topic: notif.sent  (key = notifId)
+// Producer: notification-service   Consumers: (audit / analytics — none yet)
+// Schema version: 1 — contract fixture: notification-service contracts/notif.sent.v1.json
 // ─────────────────────────────────────────────────────────────────────────────
 final case class NotificationSentEvent(
   eventId:      String,

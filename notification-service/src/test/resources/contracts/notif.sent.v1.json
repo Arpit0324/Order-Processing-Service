@@ -1,0 +1,15 @@
+{
+  "eventId": "evt-ns-005",
+  "eventType": "NOTIFICATION_SENT",
+  "eventVersion": 1,
+  "occurredAt": "2026-01-01T00:20:00Z",
+  "traceId": "trace-ns-005",
+  "payload": {
+    "notifId": "notif-1",
+    "orderId": "ord-1005",
+    "channel": "EMAIL",
+    "recipient": "sent@example.com",
+    "template": "ORDER_CONFIRMED",
+    "status": "DELIVERED"
+  }
+}

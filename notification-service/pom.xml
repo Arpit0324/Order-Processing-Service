@@ -74,6 +74,25 @@
       <artifactId>jackson-datatype-jsr310</artifactId>
     </dependency>
 
+    <!-- ── Email delivery ────────────────────────────────────────────── -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-mail</artifactId>
+    </dependency>
+
+    <!-- ── Resilience (circuit breakers around providers) ────────────── -->
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-spring-boot3</artifactId>
+    </dependency>
+
+    <!-- ── Observability (Prometheus scrape endpoint for actuator) ───── -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
     <!-- ── Test ─────────────────────────────────────────────────────── -->
     <dependency>
       <groupId>org.apache.pekko</groupId>

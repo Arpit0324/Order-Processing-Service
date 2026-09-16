@@ -33,6 +33,10 @@ All events implement the `KafkaEvent` sealed trait, which enforces:
 | `NotificationSentEvent` | `notif.sent` | notification-service |
 | `RefundRequestedEvent` | `refund.requested` | order-service |
 
+### Recipient Snapshot Fields
+
+Order lifecycle events (`OrderCreatedEvent`, `OrderCancelledEvent`, `OrderCancelRequestedEvent`, `OrderReturnedEvent`) carry optional `customerEmail` / `customerPhone` fields so notification-service can resolve recipients without an extra lookup. Both default to `None` — consumers must tolerate their absence (notification-service falls back to a placeholder address via `RecipientResolver`). Each event also documents its producer, consumers, and schema version inline in `KafkaEvents.scala`.
+
 ### JSON Codecs (`serialization/`)
 
 Circe-based codecs for all event types. Import `com.ops.shared.serialization.JsonCodecs.given` in any Scala service.
